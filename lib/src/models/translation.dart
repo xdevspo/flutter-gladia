@@ -19,7 +19,7 @@ class Translation {
   @JsonKey(name: 'results')
   final List<TranslationResult>? translationResults;
 
-  Translation({
+  const Translation({
     this.success,
     this.isEmpty,
     this.execTime,

@@ -524,28 +524,28 @@ class _LiveTranscriptionExampleState extends State<LiveTranscriptionExample> {
   }
 }
 
-## Ограничения и рекомендации
+## Limitations and Recommendations
 
-1. **Качество сети**: Для стабильной работы транскрипции в реальном времени требуется хорошее интернет-соединение
+1. **Network Quality**: Stable internet connection is required for reliable real-time transcription
 
-2. **Формат аудио**: Рекомендуется использовать следующие параметры:
+2. **Audio Format**: The following parameters are recommended:
    - Sample rate: 16000 Hz
    - Bit depth: 16 bit
    - Channels: 1 (mono)
    - Encoding: wav/pcm
 
-3. **Управление ресурсами**: Не забывайте закрывать сессии после использования
+3. **Resource Management**: Remember to close sessions after use
 
-4. **Размер пакетов**: Оптимальный размер аудио пакетов для отправки - от 4 до 10 Кб
+4. **Packet Size**: Optimal audio packet size for sending is 4 to 10 KB
 
-5. **Интервалы отправки**: Рекомендуемый интервал между отправками - от 200 до 500 мс
+5. **Sending Intervals**: Recommended interval between sends is 200 to 500 ms
 
 ---
 
-Дополнительную информацию можно найти в официальной документации Gladia API и в исходном коде Flutter SDK.
+For additional information, refer to the official Gladia API documentation and the Flutter SDK source code.
 
-## См. также
+## See Also
 
-- [Официальная документация Gladia API](https://docs.gladia.io/)
-- [Примеры использования Flutter SDK](https://github.com/your-repo/gladia-flutter/tree/main/example)
+- [Official Gladia API Documentation](https://docs.gladia.io/)
+- [Flutter SDK Usage Examples](https://github.com/xdevspo/flutter-gladia/tree/master/example)
 - [LiveTranscriptionSocket API Reference](https://pub.dev/documentation/gladia/latest/gladia/LiveTranscriptionSocket-class.html) 

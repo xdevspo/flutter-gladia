@@ -204,7 +204,7 @@ class TranscriptionData extends ResultData {
   final List<TranscriptionSegment>? utterances;
 
   /// Creates a new instance of [TranscriptionData]
-  TranscriptionData({
+  const TranscriptionData({
     super.success,
     super.isEmpty,
     super.execTime,
@@ -237,7 +237,7 @@ class SentenceData extends ResultData {
   final List<String>? _resultsList;
 
   /// Creates a new instance of [SentenceData]
-  SentenceData({
+  const SentenceData({
     super.success,
     super.isEmpty,
     super.execTime,

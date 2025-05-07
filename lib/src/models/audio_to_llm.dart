@@ -11,7 +11,7 @@ class AudioToLLM extends ResultData {
   @JsonKey(name: 'results')
   final AudioToLLMResult? resultsList;
 
-  AudioToLLM({
+  const AudioToLLM({
     super.success,
     super.isEmpty,
     super.execTime,
@@ -32,7 +32,7 @@ class AudioToLLMResult extends ResultData {
   @JsonKey(name: 'results')
   final ResultItem? resultsItem;
 
-  AudioToLLMResult({
+  const AudioToLLMResult({
     super.success,
     super.isEmpty,
     super.execTime,
@@ -55,7 +55,7 @@ class ResultItem {
   @JsonKey(name: 'response')
   final String? response;
 
-  ResultItem({
+  const ResultItem({
     this.prompt,
     this.response,
   });

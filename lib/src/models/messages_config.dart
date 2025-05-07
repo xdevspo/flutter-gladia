@@ -48,7 +48,7 @@ class MessagesConfig {
   @JsonKey(name: 'receive_lifecycle_events')
   final bool? receiveLifecycleEvents;
 
-  MessagesConfig({
+  const MessagesConfig({
     this.receiveFinalTranscripts,
     this.receiveSpeechEvents,
     this.receivePreProcessingEvents,

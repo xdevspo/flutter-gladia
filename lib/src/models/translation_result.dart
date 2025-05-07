@@ -18,7 +18,7 @@ class TranslationResult {
   final List<Subtitle>? subtitles;
   final List<Utterance>? utterances;
 
-  TranslationResult({
+  const TranslationResult({
     this.error,
     this.fullTranscript,
     this.languages,

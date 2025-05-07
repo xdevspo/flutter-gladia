@@ -21,7 +21,7 @@ class PostProcessing {
   @JsonKey(name: 'chapterization')
   final bool? chapterization;
 
-  PostProcessing({
+  const PostProcessing({
     this.summarization,
     this.summarizationConfig,
     this.chapterization,

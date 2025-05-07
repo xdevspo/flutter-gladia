@@ -42,8 +42,7 @@ void main(List<String> args) async {
   final arguments = parseArgs(args);
 
   // Get API key from environment variables or arguments
-  final apiKey =
-      Platform.environment['GLADIA_API_KEY'] ?? arguments['api-key'] ?? null;
+  final apiKey = Platform.environment['GLADIA_API_KEY'] ?? arguments['api-key'];
 
   if (apiKey == null) {
     print('❌ API key not specified. Use:');

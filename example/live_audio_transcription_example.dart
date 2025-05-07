@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:gladia/gladia.dart';
@@ -14,7 +13,7 @@ void main() {
   runApp(const MyApp());
 }
 
-// Класс для обработки событий жизненного цикла приложения
+// Class for handling application lifecycle events
 class LifecycleObserver extends WidgetsBindingObserver {
   final Future<void> Function()? onDetached;
 
@@ -52,44 +51,44 @@ class LiveTranscriptionPage extends StatefulWidget {
 }
 
 class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
-  // Экземпляр Gladia клиента
+  // Gladia client instance
   GladiaClient? _gladiaClient;
 
-  // Recorder для записи аудио с микрофона
+  // Recorder for capturing audio from microphone
   final _audioRecorder = AudioRecorder();
 
-  // WebSocket соединение для передачи аудио данных
+  // WebSocket connection for audio data transmission
   LiveTranscriptionSocket? _socket;
 
-  // Статусы для UI
+  // UI status flags
   bool _isInitializing = false;
   bool _isRecording = false;
   bool _isTranscribing = false;
 
-  // Индикация активности микрофона
+  // Microphone activity indicator
   double _currentAmplitude = 0.0;
 
-  // Буфер транскрипций
+  // Transcription buffer
   final List<String> _transcriptions = [];
 
-  // Контроллер для текстового поля с API ключом
+  // Controller for API key text field
   final TextEditingController _apiKeyController = TextEditingController();
 
-  // Стрим аудио данных
+  // Audio data stream
   StreamSubscription? _amplitudeSubscription;
   Timer? _sendAudioTimer;
   String? _tempFilePath;
 
-  // Записываем данные сессии
+  // Session data
   String? _sessionId;
 
-  // Включить подробное логирование
-  bool _enableLogging = true;
+  // Enable detailed logging
+  final bool _enableLogging = true;
 
-  // Наблюдатель жизненного цикла
+  // Lifecycle observer
   late LifecycleObserver _lifecycleObserver;
 
-  // Ключи для SharedPreferences
+  // SharedPreferences keys
   static const _apiKeyPrefKey = 'gladia_api_key';
 
   @override
@@ -97,23 +96,23 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
     super.initState();
     _loadApiKey();
 
-    // Регистрация обработчика для корректного закрытия сессии при выходе из приложения
+    // Register handler for proper session closure when exiting the app
     _lifecycleObserver = LifecycleObserver(
       onDetached: () async {
-        // Вызываем очистку ресурсов при закрытии приложения
+        // Clean up resources when closing the app
         await _stopRecordingAndTranscription();
         await _closeGladiaSession();
       },
     );
     WidgetsBinding.instance.addObserver(_lifecycleObserver);
 
-    // Очищаем активные сессии при запуске приложения
+    // Clear active sessions when starting the app
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _resetActiveSessions();
     });
   }
 
-  // Загрузка API ключа из настроек
+  // Load API key from settings
   Future<void> _loadApiKey() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -122,40 +121,40 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
         setState(() {
           _apiKeyController.text = savedKey;
         });
-        _log('API ключ загружен из кеша');
+        _log('API key loaded from cache');
       }
     } catch (e) {
-      _log('Ошибка при загрузке API ключа: $e');
+      _log('Error loading API key: $e');
     }
   }
 
-  // Сохранение API ключа в настройки
+  // Save API key to settings
   Future<void> _saveApiKey(String apiKey) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_apiKeyPrefKey, apiKey);
-      _log('API ключ сохранен в кеш');
+      _log('API key saved to cache');
     } catch (e) {
-      _log('Ошибка при сохранении API ключа: $e');
+      _log('Error saving API key: $e');
     }
   }
 
-  // Логирование для отладки
+  // Logging for debugging
   void _log(String message) {
     if (_enableLogging) {
       debugPrint('[Gladia] $message');
     }
   }
 
-  // Инициализация Gladia клиента
+  // Initialize Gladia client
   void _initGladiaClient() {
     final apiKey = _apiKeyController.text.trim();
     if (apiKey.isEmpty) {
-      _showError('Пожалуйста, введите API ключ');
+      _showError('Please enter an API key');
       return;
     }
 
-    // Сохраняем API ключ для следующего запуска
+    // Save API key for next launch
     _saveApiKey(apiKey);
 
     _gladiaClient = GladiaClient(
@@ -164,19 +163,19 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
     );
   }
 
-  // Запрос разрешений на запись аудио
+  // Request audio recording permissions
   Future<bool> _requestPermissions() async {
     final status = await Permission.microphone.request();
     return status.isGranted;
   }
 
-  // Подготовка временного файла для записи аудио
+  // Prepare temporary file for audio recording
   Future<String> _prepareAudioFile() async {
     final tempDir = await getTemporaryDirectory();
     return '${tempDir.path}/gladia_live_audio_${DateTime.now().millisecondsSinceEpoch}.wav';
   }
 
-  // Начало записи и транскрипции
+  // Start recording and transcription
   Future<void> _startRecordingAndTranscription() async {
     if (_isRecording || _isTranscribing) return;
 
@@ -184,13 +183,13 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
       _isInitializing = true;
     });
 
-    // Инициализация клиента
+    // Initialize client
     _initGladiaClient();
 
-    // Проверка разрешений
+    // Check permissions
     final hasPermission = await _requestPermissions();
     if (!hasPermission) {
-      _showError('Нет разрешения на запись аудио');
+      _showError('No permission to record audio');
       setState(() {
         _isInitializing = false;
       });
@@ -198,11 +197,11 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
     }
 
     try {
-      // Подготовка файла для записи
+      // Prepare file for recording
       _tempFilePath = await _prepareAudioFile();
-      _log('Подготовлен временный файл: $_tempFilePath');
+      _log('Temporary file prepared: $_tempFilePath');
 
-      // Инициализация сессии для распознавания речи в реальном времени
+      // Initialize real-time speech recognition session
       final sessionResult = await _gladiaClient!.initLiveTranscription(
         sampleRate: 16000,
         bitDepth: 16,
@@ -210,33 +209,33 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
         encoding: 'wav/pcm',
       );
       _sessionId = sessionResult.id;
-      _log('Сессия инициализирована: ${sessionResult.id}');
+      _log('Session initialized: ${sessionResult.id}');
 
-      // Создание WebSocket соединения
+      // Create WebSocket connection
       _socket = _gladiaClient!.createLiveTranscriptionSocket(
         sessionUrl: sessionResult.url,
         onMessage: _handleTranscriptionMessage,
         onDone: () {
-          _log('WebSocket соединение закрыто');
+          _log('WebSocket connection closed');
           _stopRecordingAndTranscription();
         },
         onError: (error) {
-          _showError('Ошибка WebSocket: $error');
-          _log('WebSocket ошибка: $error');
+          _showError('WebSocket error: $error');
+          _log('WebSocket error: $error');
           _stopRecordingAndTranscription();
         },
       );
-      _log('WebSocket соединение установлено');
+      _log('WebSocket connection established');
 
-      // Очистка предыдущих транскрипций
+      // Clear previous transcriptions
       setState(() {
         _transcriptions.clear();
       });
 
       try {
-        // Запуск записи аудио с настройками
+        // Start audio recording with settings
         await _audioRecorder.start(
-          RecordConfig(
+          const RecordConfig(
             encoder: AudioEncoder.wav,
             bitRate: 256000,
             sampleRate: 16000,
@@ -244,25 +243,25 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
           ),
           path: _tempFilePath!,
         );
-        _log('Запись аудио запущена в файл: $_tempFilePath');
+        _log('Audio recording started to file: $_tempFilePath');
 
-        // Настройка мониторинга активности микрофона
+        // Setup microphone activity monitoring
         _startAudioMonitoring();
 
-        // Запуск периодической отправки аудио данных
+        // Start periodic audio data sending
         _startPeriodicAudioSending();
 
-        // Обновление UI
+        // Update UI
         setState(() {
           _isInitializing = false;
           _isRecording = true;
           _isTranscribing = true;
         });
       } catch (recordError) {
-        _showError('Ошибка при запуске записи: $recordError');
-        _log('Ошибка при запуске записи: $recordError');
+        _showError('Error starting recording: $recordError');
+        _log('Error starting recording: $recordError');
 
-        // Закрываем соединение если запись не удалась
+        // Close connection if recording failed
         if (_socket != null && _socket!.isConnected) {
           _socket!.close();
           _socket = null;
@@ -273,24 +272,24 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
         });
       }
     } catch (e) {
-      _showError('Ошибка при инициализации: $e');
-      _log('Ошибка при инициализации: $e');
+      _showError('Initialization error: $e');
+      _log('Initialization error: $e');
       setState(() {
         _isInitializing = false;
       });
     }
   }
 
-  // Сбрасывает зависшие активные сессии
+  // Reset stuck active sessions
   Future<void> _resetActiveSessions() async {
     if (_apiKeyController.text.trim().isEmpty) {
-      return; // API ключ не задан, не можем продолжить
+      return; // API key not set, cannot continue
     }
 
     try {
-      _log('Попытка сброса активных сессий...');
+      _log('Attempting to reset active sessions...');
 
-      // Отправляем запрос на получение списка активных сессий
+      // Send request to get list of active sessions
       final dio = Dio()
         ..options.baseUrl = 'https://api.gladia.io/'
         ..options.headers = {
@@ -298,11 +297,11 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
           'Content-Type': 'application/json',
         };
 
-      // Пробуем сбросить сессии, отправляя DELETE запрос на специальный эндпоинт
+      // Try to reset sessions by sending a DELETE request to special endpoint
       await dio.delete('v2/live/reset').timeout(
         const Duration(seconds: 5),
         onTimeout: () {
-          _log('Тайм-аут при сбросе сессий');
+          _log('Timeout when resetting sessions');
           return Response(
             requestOptions: RequestOptions(path: 'v2/live/reset'),
             statusCode: 408,
@@ -310,19 +309,19 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
         },
       );
 
-      _log('Сброс активных сессий выполнен успешно');
+      _log('Active sessions reset successful');
     } catch (e) {
-      _log('Не удалось сбросить активные сессии: $e');
-      // Не показываем ошибку пользователю, это фоновый процесс
+      _log('Failed to reset active sessions: $e');
+      // Don't show error to user, this is a background process
     }
   }
 
-  // Закрытие сессии на стороне API
+  // Close session on API side
   Future<void> _closeGladiaSession() async {
     if (_sessionId != null && _apiKeyController.text.trim().isNotEmpty) {
       try {
-        _log('Закрытие сессии Gladia API: $_sessionId');
-        // Отправляем DELETE запрос, чтобы закрыть сессию на стороне API
+        _log('Closing Gladia API session: $_sessionId');
+        // Send DELETE request to close session on API side
         final dio = Dio()
           ..options.baseUrl = 'https://api.gladia.io/'
           ..options.headers = {
@@ -333,21 +332,25 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
         await dio.delete('v2/live/$_sessionId').timeout(
           const Duration(seconds: 5),
           onTimeout: () {
-            _log('Тайм-аут при закрытии сессии');
-            // В случае тайм-аута пробуем выполнить сброс всех сессий
-            dio
-                .delete('v2/live/reset')
-                .catchError((e) => _log('Ошибка при сбросе сессий: $e'));
+            _log('Timeout when closing session');
+            // In case of timeout, try to reset all sessions
+            dio.delete('v2/live/reset').catchError((e) {
+              _log('Error resetting sessions: $e');
+              return Response(
+                requestOptions: RequestOptions(path: 'v2/live/reset'),
+                statusCode: 500,
+              );
+            });
             return Response(
               requestOptions: RequestOptions(path: 'v2/live/$_sessionId'),
               statusCode: 408,
             );
           },
         );
-        _log('Сессия успешно закрыта');
+        _log('Session successfully closed');
       } catch (e) {
-        _log('Ошибка при закрытии сессии: $e');
-        // Пробуем выполнить сброс всех сессий при ошибке
+        _log('Error closing session: $e');
+        // Try to reset all sessions on error
         try {
           final dio = Dio()
             ..options.baseUrl = 'https://api.gladia.io/'
@@ -359,82 +362,82 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
           await dio.delete('v2/live/reset').timeout(
             const Duration(seconds: 3),
             onTimeout: () {
-              _log('Тайм-аут при сбросе сессий после ошибки');
+              _log('Timeout when resetting sessions after error');
               return Response(
                 requestOptions: RequestOptions(path: 'v2/live/reset'),
                 statusCode: 408,
               );
             },
           );
-          _log('Выполнен сброс всех сессий после ошибки закрытия');
+          _log('All sessions reset after close error');
         } catch (resetError) {
-          _log('Не удалось сбросить сессии: $resetError');
+          _log('Failed to reset sessions: $resetError');
         }
       }
       _sessionId = null;
     }
   }
 
-  // Остановка записи и транскрипции
+  // Stop recording and transcription
   Future<void> _stopRecordingAndTranscription() async {
     if (!_isRecording && !_isTranscribing) return;
 
-    // Отмена подписок и таймеров
+    // Cancel subscriptions and timers
     _amplitudeSubscription?.cancel();
     _amplitudeSubscription = null;
 
     _sendAudioTimer?.cancel();
     _sendAudioTimer = null;
 
-    // Остановка записи
+    // Stop recording
     if (_isRecording) {
       try {
         final path = await _audioRecorder.stop();
-        _log('Запись аудио остановлена: $path');
+        _log('Audio recording stopped: $path');
       } catch (e) {
-        _log('Ошибка при остановке записи: $e');
-        // Пробуем принудительно отменить запись
+        _log('Error stopping recording: $e');
+        // Try to forcibly cancel recording
         try {
           await _audioRecorder.cancel();
-          _log('Запись аудио принудительно отменена');
+          _log('Audio recording forcibly canceled');
         } catch (ce) {
-          _log('Ошибка при отмене записи: $ce');
+          _log('Error cancelling recording: $ce');
         }
       }
     }
 
-    // Отправка сигнала об остановке записи
+    // Send stop recording signal
     if (_socket != null && _socket!.isConnected) {
       try {
         _socket!.sendStopRecording();
-        _log('Отправлен сигнал остановки записи');
+        _log('Stop recording signal sent');
       } catch (e) {
-        _log('Ошибка при отправке сигнала остановки: $e');
+        _log('Error sending stop signal: $e');
       } finally {
         _socket!.close();
         _socket = null;
-        _log('WebSocket соединение закрыто');
+        _log('WebSocket connection closed');
       }
     }
 
-    // Закрытие сессии на сервере Gladia
+    // Close session on Gladia server
     await _closeGladiaSession();
 
-    // Очистка временного файла
+    // Clean up temporary file
     if (_tempFilePath != null) {
       try {
         final tempFile = File(_tempFilePath!);
         if (await tempFile.exists()) {
           await tempFile.delete();
-          _log('Временный файл удален: $_tempFilePath');
+          _log('Temporary file deleted: $_tempFilePath');
         }
       } catch (e) {
-        _log('Ошибка при удалении временного файла: $e');
+        _log('Error deleting temporary file: $e');
       }
       _tempFilePath = null;
     }
 
-    // Обновление UI
+    // Update UI
     setState(() {
       _currentAmplitude = 0.0;
       _isRecording = false;
@@ -442,13 +445,13 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
     });
   }
 
-  // Мониторинг уровня звука микрофона
+  // Monitor microphone sound level
   void _startAudioMonitoring() {
     _amplitudeSubscription = _audioRecorder
         .onAmplitudeChanged(const Duration(milliseconds: 200))
         .listen((amp) {
       setState(() {
-        // Защита от некорректных значений амплитуды
+        // Protection from incorrect amplitude values
         if (!amp.current.isNaN && !amp.current.isInfinite) {
           _currentAmplitude = amp.current;
         } else {
@@ -458,18 +461,18 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
     });
   }
 
-  // Периодическая отправка аудио данных
+  // Periodic audio data sending
   void _startPeriodicAudioSending() {
-    // Интервал между чтениями аудиофайла (мс)
+    // Interval between audio file readings (ms)
     const sendInterval = 300;
 
-    // Размер секций для чтения аудио (44 байта - размер заголовка WAV)
+    // Size of sections for reading audio (44 bytes - WAV header size)
     const wavHeaderSize = 44;
 
-    // Флаг первой отправки (для отправки WAV заголовка)
+    // First send flag (for WAV header sending)
     bool isFirstSend = true;
 
-    // Запускаем периодическое чтение и отправку аудио данных
+    // Start periodic reading and sending of audio data
     _sendAudioTimer = Timer.periodic(
       const Duration(milliseconds: sendInterval),
       (timer) async {
@@ -479,24 +482,24 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
         }
 
         try {
-          // Создаем буфер для аудио данных
+          // Create buffer for audio data
           final file = File(_tempFilePath!);
 
-          // Проверяем, существует ли файл
+          // Check if file exists
           if (await file.exists()) {
             final fileLength = await file.length();
 
-            // Проверяем, есть ли данные для чтения
+            // Check if there is data to read
             if (fileLength > wavHeaderSize) {
               final raf = await file.open(mode: FileMode.read);
 
               if (isFirstSend) {
-                // При первой отправке сначала пропускаем WAV заголовок
+                // On first send, skip WAV header first
                 isFirstSend = false;
                 await raf.setPosition(wavHeaderSize);
               } else {
-                // Читаем последний фрагмент аудио данных, пропуская заголовок
-                final chunkSize = 8 * 1024; // 8KB
+                // Read the last chunk of audio data, skipping header
+                const chunkSize = 8 * 1024; // 8KB
                 final endPos = fileLength;
                 final startPos = fileLength > chunkSize + wavHeaderSize
                     ? fileLength - chunkSize
@@ -507,44 +510,44 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
                 final audioBytes = await raf.read(endPos - startPos);
                 await raf.close();
 
-                // Отправляем аудио данные через WebSocket
+                // Send audio data via WebSocket
                 if (_socket != null &&
                     _socket!.isConnected &&
                     audioBytes.isNotEmpty) {
                   try {
-                    // Отправляем сырые PCM данные
+                    // Send raw PCM data
                     _socket!.sendAudioData(audioBytes);
 
-                    // Альтернативно, можно отправлять данные в формате base64
-                    // Раскомментируйте следующую строку, если нужно отправлять в base64
+                    // Alternatively, data can be sent in base64 format
+                    // Uncomment the following line if you need to send in base64
                     // _socket!.sendBase64AudioData(audioBytes);
 
-                    _log('Отправлено ${audioBytes.length} байт аудио данных');
+                    _log('Sent ${audioBytes.length} bytes of audio data');
                   } catch (e) {
-                    _log('Ошибка при отправке аудиоданных: $e');
+                    _log('Error sending audio data: $e');
                   }
                 }
               }
             } else if (fileLength > 0 && fileLength <= wavHeaderSize) {
-              _log('Аудиофайл содержит только заголовок WAV');
+              _log('Audio file contains only WAV header');
             } else {
-              _log('Файл аудиозаписи пуст');
+              _log('Audio recording file is empty');
             }
           } else {
-            _log('Файл аудиозаписи не существует');
+            _log('Audio recording file does not exist');
           }
         } catch (e) {
-          _log('Ошибка при чтении аудио данных: $e');
+          _log('Error reading audio data: $e');
         }
       },
     );
   }
 
-  // Обработка сообщений от сервера транскрипции
+  // Handle messages from transcription server
   void _handleTranscriptionMessage(dynamic message) {
-    _log('Получено сообщение от сервера: $message');
+    _log('Message received from server: $message');
 
-    // Обработка сообщения о транскрипции
+    // Process transcription message
     if (message is Map<String, dynamic> && message['type'] == 'transcript') {
       try {
         final transcriptionMessage = TranscriptionMessage.fromJson(message);
@@ -554,43 +557,42 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
         if (text.isNotEmpty) {
           setState(() {
             if (isFinal) {
-              // Если это финальная транскрипция, добавляем ее в список
+              // If this is a final transcription, add it to the list
               _transcriptions.add(text);
-              _log('Получена финальная транскрипция: $text');
+              _log('Final transcription received: $text');
 
-              // Ограничиваем количество транскрипций для избежания переполнения памяти
+              // Limit the number of transcriptions to avoid memory overflow
               if (_transcriptions.length > 50) {
                 _transcriptions.removeAt(0);
               }
             } else {
-              // Для промежуточных результатов обновляем последний элемент
+              // For intermediate results, update the last element
               if (_transcriptions.isEmpty) {
-                _transcriptions.add('(частично) $text');
+                _transcriptions.add('(partial) $text');
               } else {
-                _transcriptions[_transcriptions.length - 1] =
-                    '(частично) $text';
+                _transcriptions[_transcriptions.length - 1] = '(partial) $text';
               }
-              _log('Получена частичная транскрипция: $text');
+              _log('Partial transcription received: $text');
             }
           });
         }
       } catch (e) {
-        _log('Ошибка обработки сообщения: $e');
+        _log('Error processing message: $e');
       }
     }
-    // Обработка сообщения о готовности сессии
+    // Process session ready message
     else if (message is Map<String, dynamic> && message['type'] == 'ready') {
-      _log('Сессия готова к приему аудио данных');
+      _log('Session ready to receive audio data');
     }
-    // Обработка сообщения об ошибке
+    // Process error message
     else if (message is Map<String, dynamic> && message['type'] == 'error') {
-      final errorMessage = message['data']?['message'] ?? 'Неизвестная ошибка';
-      _log('Ошибка от сервера: $errorMessage');
-      _showError('Ошибка от сервера: $errorMessage');
+      final errorMessage = message['data']?['message'] ?? 'Unknown error';
+      _log('Error from server: $errorMessage');
+      _showError('Error from server: $errorMessage');
     }
   }
 
-  // Отображение ошибки
+  // Display error
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -614,12 +616,12 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gladia Live Транскрипция'),
+        title: const Text('Gladia Live Transcription'),
         actions: [
-          // Кнопка сброса сессий
+          // Reset sessions button
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Сбросить активные сессии',
+            tooltip: 'Reset active sessions',
             onPressed: _isInitializing
                 ? null
                 : () async {
@@ -632,7 +634,7 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Выполнен сброс активных сессий'),
+                        content: Text('Active sessions reset'),
                         backgroundColor: Colors.green,
                       ),
                     );
@@ -645,12 +647,12 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // API ключ
+            // API key
             TextField(
               controller: _apiKeyController,
               decoration: const InputDecoration(
-                labelText: 'API Ключ Gladia',
-                hintText: 'Введите ваш API ключ Gladia',
+                labelText: 'Gladia API Key',
+                hintText: 'Enter your Gladia API key',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
@@ -658,7 +660,7 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
             ),
             const SizedBox(height: 16),
 
-            // Кнопки управления
+            // Control buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -673,7 +675,7 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
                             valueColor:
                                 AlwaysStoppedAnimation<Color>(Colors.white),
                           )
-                        : const Text('Начать'),
+                        : const Text('Start'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -685,21 +687,21 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                     ),
-                    child: const Text('Остановить'),
+                    child: const Text('Stop'),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            // Статус
+            // Status
             Center(
               child: Text(
                 _isRecording
-                    ? 'Запись и транскрипция...'
+                    ? 'Recording and transcribing...'
                     : _isTranscribing
-                        ? 'Транскрипция...'
-                        : 'Готов к записи',
+                        ? 'Transcribing...'
+                        : 'Ready to record',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -708,7 +710,7 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
             ),
             const SizedBox(height: 16),
 
-            // Индикатор записи и амплитуды
+            // Recording and amplitude indicator
             if (_isRecording)
               Column(
                 children: [
@@ -728,7 +730,7 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Идет запись...',
+                            'Recording in progress...',
                             style: TextStyle(
                               color: Colors.red.shade700,
                               fontWeight: FontWeight.bold,
@@ -739,13 +741,13 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Индикатор уровня звука
+                  // Sound level indicator
                   LinearProgressIndicator(
-                    value: _currentAmplitude.isNaN ||
-                            _currentAmplitude.isInfinite
-                        ? 0.0
-                        : (_currentAmplitude / 100).clamp(
-                            0.0, 1.0), // Нормализуем и ограничиваем значение
+                    value:
+                        _currentAmplitude.isNaN || _currentAmplitude.isInfinite
+                            ? 0.0
+                            : (_currentAmplitude / 100)
+                                .clamp(0.0, 1.0), // Normalize and limit value
                     backgroundColor: Colors.grey.shade200,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       _currentAmplitude > 50
@@ -757,7 +759,7 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Уровень звука: ${_currentAmplitude.isNaN || _currentAmplitude.isInfinite ? "0.0" : _currentAmplitude.toStringAsFixed(1)} dB',
+                    'Sound level: ${_currentAmplitude.isNaN || _currentAmplitude.isInfinite ? "0.0" : _currentAmplitude.toStringAsFixed(1)} dB',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,
@@ -767,9 +769,9 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
               ),
             const SizedBox(height: 16),
 
-            // Заголовок для транскрипций
+            // Heading for transcriptions
             const Text(
-              'Транскрипция:',
+              'Transcription:',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -777,7 +779,7 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
             ),
             const SizedBox(height: 8),
 
-            // Список транскрипций
+            // Transcription list
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(12),
@@ -788,7 +790,7 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
                 child: _transcriptions.isEmpty
                     ? const Center(
                         child: Text(
-                          'Транскрипции будут отображаться здесь',
+                          'Transcriptions will appear here',
                           style: TextStyle(
                             color: Colors.grey,
                             fontStyle: FontStyle.italic,
@@ -797,13 +799,12 @@ class _LiveTranscriptionPageState extends State<LiveTranscriptionPage> {
                       )
                     : ListView.builder(
                         itemCount: _transcriptions.length,
-                        shrinkWrap:
-                            true, // Добавляем для предотвращения переполнения
+                        shrinkWrap: true, // Add to prevent overflow
                         physics:
-                            const ClampingScrollPhysics(), // Улучшаем скроллинг
+                            const ClampingScrollPhysics(), // Improve scrolling
                         itemBuilder: (context, index) {
                           final text = _transcriptions[index];
-                          final isPartial = text.startsWith('(частично)');
+                          final isPartial = text.startsWith('(partial)');
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4.0),
                             child: Container(

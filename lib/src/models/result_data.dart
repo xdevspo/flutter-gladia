@@ -29,7 +29,7 @@ class ResultData {
   final String? results;
 
   /// Creates a new instance of [ResultData]
-  ResultData({
+  const ResultData({
     this.success,
     this.isEmpty,
     this.execTime,

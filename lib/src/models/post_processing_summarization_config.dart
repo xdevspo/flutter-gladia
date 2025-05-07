@@ -14,7 +14,7 @@ class PostProcessingSummarizationConfig {
   @JsonKey(name: 'type')
   final String? type;
 
-  PostProcessingSummarizationConfig({
+  const PostProcessingSummarizationConfig({
     this.type,
   });
 

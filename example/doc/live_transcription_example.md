@@ -1,17 +1,17 @@
-# Пример транскрипции в реальном времени
+# Live Transcription Example
 
-В этом документе описывается пример использования Gladia API SDK для транскрипции аудио в реальном времени.
+This document describes an example of using the Gladia API SDK for real-time audio transcription.
 
-## Обзор
+## Overview
 
-Транскрипция в реальном времени позволяет преобразовывать речь в текст по мере поступления аудиоданных. Это полезно для приложений, требующих мгновенной обработки речи, таких как:
+Real-time transcription allows you to convert speech to text as audio data is received. This is useful for applications that require instant speech processing, such as:
 
-- Живые субтитры в видеоконференциях
-- Голосовое управление
-- Ассистивные технологии
-- Расшифровка интервью и встреч в реальном времени
+- Live subtitles in video conferences
+- Voice control
+- Assistive technologies
+- Real-time transcription of interviews and meetings
 
-## Код примера (live_audio_transcription_example.dart)
+## Example Code (live_audio_transcription_example.dart)
 
 ```dart
 import 'dart:convert';
@@ -63,7 +63,7 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
   final _recorder = Record();
   bool _isRecording = false;
   String _transcriptionText = '';
-  String _status = 'Готов к началу';
+  String _status = 'Ready to start';
   String _errorMessage = '';
 
   @override
@@ -76,7 +76,7 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
     final status = await Permission.microphone.request();
     if (status != PermissionStatus.granted) {
       setState(() {
-        _errorMessage = 'Для работы приложения требуется доступ к микрофону';
+        _errorMessage = 'Microphone access is required for this app to work';
       });
       return;
     }
@@ -84,24 +84,24 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
 
   Future<void> _startRecording() async {
     try {
-      // Запрос разрешений
+      // Request permissions
       await _requestPermissions();
       if (_errorMessage.isNotEmpty) return;
 
       setState(() {
-        _status = 'Инициализация сессии...';
+        _status = 'Initializing session...';
         _transcriptionText = '';
       });
 
-      // 1. Инициализация сессии транскрипции
+      // 1. Initialize transcription session
       final options = LiveTranscriptionOptions(
         encoding: 'pcm',
         sampleRate: 16000,
         bitDepth: 16,
-        language: 'ru',
+        language: 'en',
         diarize: true,
         speakerCount: 2,
-        interim: true, // Получение промежуточных результатов
+        interim: true, // Get interim results
       );
 
       final initResult = await _client.initiateLiveTranscription(
@@ -109,10 +109,10 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
       );
 
       setState(() {
-        _status = 'Подключение к WebSocket...';
+        _status = 'Connecting to WebSocket...';
       });
 
-      // 2. Создание WebSocket соединения
+      // 2. Create WebSocket connection
       _socket = _client.createLiveTranscriptionSocket(
         websocketUrl: initResult.websocketUrl,
         onTranscriptionResult: (result) {
@@ -120,34 +120,34 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
             _transcriptionText = result.text;
             
             if (result.metadata?.isFinal == true) {
-              _status = 'Финальный результат получен';
+              _status = 'Final result received';
             } else {
-              _status = 'Идет транскрипция...';
+              _status = 'Transcription in progress...';
             }
           });
         },
         onError: (error) {
           setState(() {
-            _errorMessage = 'Ошибка WebSocket: $error';
+            _errorMessage = 'WebSocket error: $error';
             _isRecording = false;
           });
         },
         onDone: () {
           setState(() {
-            _status = 'Соединение закрыто';
+            _status = 'Connection closed';
             _isRecording = false;
           });
         },
       );
 
-      // 3. Запуск соединения
+      // 3. Start connection
       await _socket!.connect();
 
       setState(() {
-        _status = 'Запуск записи аудио...';
+        _status = 'Starting audio recording...';
       });
 
-      // 4. Настройка записи аудио
+      // 4. Configure audio recording
       await _recorder.start(
         encoder: AudioEncoder.pcm16bits,
         samplingRate: 16000,
@@ -156,10 +156,10 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
 
       setState(() {
         _isRecording = true;
-        _status = 'Запись и транскрипция активны';
+        _status = 'Recording and transcription active';
       });
 
-      // 5. Запуск периодического получения и отправки аудиоданных
+      // 5. Start periodic audio data retrieval and sending
       _recorder.onAmplitudeChanged(const Duration(milliseconds: 200)).listen((amp) async {
         if (_isRecording && _socket != null) {
           try {
@@ -168,13 +168,13 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
               _socket!.sendAudioData(buffer);
             }
           } catch (e) {
-            print('Ошибка при получении аудиоданных: $e');
+            print('Error getting audio data: $e');
           }
         }
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Ошибка при запуске записи: $e';
+        _errorMessage = 'Error starting recording: $e';
         _isRecording = false;
       });
     }
@@ -183,25 +183,25 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
   Future<void> _stopRecording() async {
     if (_isRecording) {
       setState(() {
-        _status = 'Завершение записи...';
+        _status = 'Finishing recording...';
       });
 
-      // Остановка записи
+      // Stop recording
       await _recorder.stop();
 
-      // Отправка сигнала о завершении потока
+      // Send end of stream signal
       _socket?.sendEndOfStream();
 
-      // Ожидание финальной обработки
+      // Wait for final processing
       await Future.delayed(const Duration(seconds: 2));
 
-      // Закрытие соединения
+      // Close connection
       await _socket?.close();
       _socket = null;
 
       setState(() {
         _isRecording = false;
-        _status = 'Запись завершена';
+        _status = 'Recording completed';
       });
     }
   }
@@ -210,21 +210,21 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Транскрипция в реальном времени'),
+        title: const Text('Real-time Transcription'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Информация о статусе
+            // Status information
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Статус: $_status',
+                    Text('Status: $_status',
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                     if (_errorMessage.isNotEmpty)
                       Text(_errorMessage,
@@ -235,7 +235,7 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
             ),
             const SizedBox(height: 16),
             
-            // Кнопка записи
+            // Record button
             ElevatedButton(
               onPressed: _isRecording ? _stopRecording : _startRecording,
               style: ElevatedButton.styleFrom(
@@ -243,13 +243,13 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
                 backgroundColor: _isRecording ? Colors.red : Colors.blue,
               ),
               child: Text(
-                _isRecording ? 'Остановить запись' : 'Начать запись',
+                _isRecording ? 'Stop Recording' : 'Start Recording',
                 style: const TextStyle(fontSize: 18),
               ),
             ),
             const SizedBox(height: 24),
             
-            // Область транскрипции
+            // Transcription area
             Expanded(
               child: Card(
                 child: Padding(
@@ -257,7 +257,7 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
                   child: SingleChildScrollView(
                     child: Text(
                       _transcriptionText.isEmpty
-                          ? 'Говорите после нажатия кнопки записи...'
+                          ? 'Speak after pressing the record button...'
                           : _transcriptionText,
                       style: const TextStyle(fontSize: 16),
                     ),
@@ -273,45 +273,45 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
 }
 ```
 
-## Пояснение принципа работы
+## How It Works
 
-Процесс транскрипции в реальном времени состоит из следующих этапов:
+The real-time transcription process consists of the following steps:
 
-1. **Инициализация сессии**:
+1. **Session Initialization**:
    ```dart
    final options = LiveTranscriptionOptions(
      encoding: 'pcm',
      sampleRate: 16000,
      bitDepth: 16,
-     language: 'ru',
+     language: 'en',
      diarize: true,
      speakerCount: 2,
-     interim: true, // Получение промежуточных результатов
+     interim: true, // Get interim results
    );
    
    final initResult = await _client.initiateLiveTranscription(options: options);
    ```
 
-2. **Создание WebSocket соединения**:
+2. **WebSocket Connection Creation**:
    ```dart
    _socket = _client.createLiveTranscriptionSocket(
      websocketUrl: initResult.websocketUrl,
      onTranscriptionResult: (result) {
-       // Обработка результата
+       // Process result
      },
      onError: (error) {
-       // Обработка ошибок
+       // Handle errors
      },
      onDone: () {
-       // Обработка завершения
+       // Handle completion
      },
    );
    
-   // Запуск соединения
+   // Start connection
    await _socket!.connect();
    ```
 
-3. **Запись аудио с микрофона**:
+3. **Microphone Audio Recording**:
    ```dart
    await _recorder.start(
      encoder: AudioEncoder.pcm16bits,
@@ -320,7 +320,7 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
    );
    ```
 
-4. **Отправка аудиоданных**:
+4. **Sending Audio Data**:
    ```dart
    _recorder.onAmplitudeChanged(const Duration(milliseconds: 200)).listen((amp) async {
      if (_isRecording && _socket != null) {
@@ -332,43 +332,43 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
    });
    ```
 
-5. **Получение результатов транскрипции**:
+5. **Receiving Transcription Results**:
    ```dart
    onTranscriptionResult: (result) {
      setState(() {
        _transcriptionText = result.text;
        
        if (result.metadata?.isFinal == true) {
-         _status = 'Финальный результат получен';
+         _status = 'Final result received';
        } else {
-         _status = 'Идет транскрипция...';
+         _status = 'Transcription in progress...';
        }
      });
    },
    ```
 
-6. **Завершение сессии**:
+6. **Ending the Session**:
    ```dart
-   // Остановка записи
+   // Stop recording
    await _recorder.stop();
    
-   // Отправка сигнала о завершении потока
+   // Send end of stream signal
    _socket?.sendEndOfStream();
    
-   // Закрытие соединения
+   // Close connection
    await _socket?.close();
    ```
 
-## Настройка
+## Setup
 
-Для запуска этого примера вам потребуется:
+To run this example, you'll need:
 
-1. **API ключ Gladia** — Добавьте его в файл `.env`:
+1. **Gladia API key** — Add it to a `.env` file:
    ```
-   GLADIA_API_KEY=ваш_api_ключ
+   GLADIA_API_KEY=your_api_key
    ```
 
-2. **Зависимости** — Добавьте следующие пакеты в `pubspec.yaml`:
+2. **Dependencies** — Add the following packages to your `pubspec.yaml`:
    ```yaml
    dependencies:
      flutter:
@@ -379,7 +379,7 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
      flutter_dotenv: ^5.0.2
    ```
 
-3. **Разрешения** — Добавьте разрешение на доступ к микрофону:
+3. **Permissions** — Add microphone access permission:
    - Android (`android/app/src/main/AndroidManifest.xml`):
      ```xml
      <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -389,36 +389,36 @@ class _LiveTranscriptionScreenState extends State<LiveTranscriptionScreen> {
    - iOS (`ios/Runner/Info.plist`):
      ```xml
      <key>NSMicrophoneUsageDescription</key>
-     <string>Этому приложению требуется доступ к микрофону для транскрипции речи</string>
+     <string>This app needs microphone access for speech transcription</string>
      ```
 
-## Важные параметры
+## Important Parameters
 
-При настройке транскрипции в реальном времени обратите внимание на следующие параметры:
+When configuring real-time transcription, pay attention to the following parameters:
 
-1. **encoding** — Формат кодирования аудио (`pcm`, `opus`, `wav`)
-2. **sampleRate** — Частота дискретизации (обычно 16000 Гц)
-3. **bitDepth** — Глубина битов (16 бит для PCM)
-4. **interim** — Получение промежуточных результатов
-5. **language** — Язык аудио
-6. **diarize** — Определение говорящих
+1. **encoding** — Audio encoding format (`pcm`, `opus`, `wav`)
+2. **sampleRate** — Sampling rate (usually 16000 Hz)
+3. **bitDepth** — Bit depth (16 bit for PCM)
+4. **interim** — Receiving interim results
+5. **language** — Audio language
+6. **diarize** — Speaker identification
 
-## Возможные проблемы и решения
+## Common Issues and Solutions
 
-1. **Проблема**: Не удаётся получить доступ к микрофону  
-   **Решение**: Проверьте настройки разрешений в манифесте и добавьте запрос разрешения в коде
+1. **Issue**: Cannot access microphone  
+   **Solution**: Check permission settings in the manifest and add permission request in code
 
-2. **Проблема**: Ошибка WebSocket соединения  
-   **Решение**: Проверьте подключение к интернету и правильность API ключа
+2. **Issue**: WebSocket connection error  
+   **Solution**: Check internet connection and verify API key correctness
 
-3. **Проблема**: Низкое качество распознавания  
-   **Решение**: Настройте правильный язык и проверьте качество входного аудио
+3. **Issue**: Poor recognition quality  
+   **Solution**: Set the correct language and check input audio quality
 
-4. **Проблема**: Высокая задержка  
-   **Решение**: Уменьшите размер отправляемых аудио-чанков или частоту отправки
+4. **Issue**: High latency  
+   **Solution**: Reduce the size of audio chunks being sent or their frequency
 
-## Дополнительная информация
+## Additional Information
 
-- [Руководство по транскрипции в реальном времени](../../doc/live_transcription_guide.md)
-- [API справочник](../../doc/api_reference.md)
-- [Обработка ошибок](../../doc/error_handling.md) 
+- [Live Transcription Guide](../../doc/live_transcription_guide.md)
+- [API Reference](../../doc/api_reference.md)
+- [Error Handling](../../doc/error_handling.md) 

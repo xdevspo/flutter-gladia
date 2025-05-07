@@ -1,122 +1,122 @@
-# Продвинутые примеры использования Gladia API SDK
+# Advanced Usage Examples for Gladia API SDK
 
-В этом документе представлены продвинутые примеры использования Gladia API SDK для различных сценариев.
+This document presents advanced examples of using the Gladia API SDK for various scenarios.
 
-## Пример транскрипции с диаризацией (определением говорящих)
+## Speaker Diarization Example (Speaker Identification)
 
 ```dart
 import 'dart:io';
 import 'package:gladia/gladia.dart';
 
 Future<void> main() async {
-  final client = GladiaClient(apiKey: 'ваш_api_ключ');
-  final file = File('путь/к/файлу.mp3');
+  final client = GladiaClient(apiKey: 'your_api_key');
+  final file = File('path/to/file.mp3');
   
   try {
-    // Настройка опций с диаризацией
+    // Setting options with diarization
     final options = TranscriptionOptions(
-      diarize: true,       // Включить определение говорящих
-      speakerCount: 2,     // Предполагаемое количество говорящих
+      diarize: true,       // Enable speaker identification
+      speakerCount: 2,     // Expected number of speakers
       diarizationConfig: DiarizationConfig(
-        minSpeakers: 1,    // Минимальное количество говорящих
-        maxSpeakers: 3,    // Максимальное количество говорящих
+        minSpeakers: 1,    // Minimum number of speakers
+        maxSpeakers: 3,    // Maximum number of speakers
       ),
     );
     
-    // Транскрипция файла с опциями
+    // Transcribe file with options
     final result = await client.transcribeFile(
       file: file,
       options: options,
     );
     
-    // Вывод полного текста
-    print('Полный текст: ${result.text}');
+    // Output full text
+    print('Full text: ${result.text}');
     
-    // Вывод информации по говорящим
+    // Output information by speakers
     if (result.utterances != null) {
       for (final utterance in result.utterances!) {
-        print('Говорящий ${utterance.speaker}: ${utterance.text}');
-        print('Время: ${utterance.start} - ${utterance.end}');
+        print('Speaker ${utterance.speaker}: ${utterance.text}');
+        print('Time: ${utterance.start} - ${utterance.end}');
         print('---');
       }
     }
   } catch (e) {
-    print('Ошибка: $e');
+    print('Error: $e');
   }
 }
 ```
 
-## Пример генерации субтитров
+## Subtitle Generation Example
 
 ```dart
 import 'dart:io';
 import 'package:gladia/gladia.dart';
 
 Future<void> main() async {
-  final client = GladiaClient(apiKey: 'ваш_api_ключ');
+  final client = GladiaClient(apiKey: 'your_api_key');
   final audioUrl = 'https://example.com/audio.mp3';
   
   try {
-    // Настройка опций для генерации субтитров
+    // Configure options for subtitle generation
     final options = TranscriptionOptions(
-      language: 'ru',
-      subtitles: true,            // Включить генерацию субтитров
-      subtitlesFormat: 'srt',     // Формат субтитров (srt, vtt)
+      language: 'en',
+      subtitles: true,            // Enable subtitle generation
+      subtitlesFormat: 'srt',     // Subtitle format (srt, vtt)
       subtitlesConfig: SubtitlesConfig(
-        maxLineLength: 40,        // Максимальная длина строки
-        maxLinesCount: 2,         // Максимальное количество строк
-        minDuration: 1,           // Минимальная длительность субтитра (в секундах)
-        maxDuration: 7,           // Максимальная длительность субтитра (в секундах)
+        maxLineLength: 40,        // Maximum line length
+        maxLinesCount: 2,         // Maximum number of lines
+        minDuration: 1,           // Minimum subtitle duration (in seconds)
+        maxDuration: 7,           // Maximum subtitle duration (in seconds)
       ),
     );
     
-    // Инициировать транскрипцию
+    // Initiate transcription
     final initResult = await client.initiateTranscription(
       audioUrl: audioUrl,
       options: options,
     );
     
-    // Получить результат
+    // Get result
     final result = await client.getTranscriptionResult(taskId: initResult.id);
     
-    // Получить URL субтитров
+    // Get subtitle URL
     if (result.metadata?.subtitle != null) {
       final subtitlesUrl = result.metadata!.subtitle!.url;
-      print('URL субтитров: $subtitlesUrl');
+      print('Subtitles URL: $subtitlesUrl');
       
-      // Скачать файл субтитров
+      // Download subtitle file
       final response = await client.downloadFile(subtitlesUrl);
       final file = File('subtitles.srt');
       await file.writeAsBytes(response.data);
       
-      print('Субтитры сохранены в файл subtitles.srt');
+      print('Subtitles saved to file subtitles.srt');
       
-      // Вывести содержимое субтитров
+      // Display subtitle content
       final content = await file.readAsString();
-      print('\nПример содержимого:\n');
+      print('\nExample content:\n');
       print(content.split('\n\n').take(3).join('\n\n'));
     }
   } catch (e) {
-    print('Ошибка: $e');
+    print('Error: $e');
   }
 }
 ```
 
-## Пример с пользовательским словарем
+## Custom Vocabulary Example
 
 ```dart
 import 'dart:io';
 import 'package:gladia/gladia.dart';
 
 Future<void> main() async {
-  final client = GladiaClient(apiKey: 'ваш_api_ключ');
-  final file = File('путь/к/файлу.mp3');
+  final client = GladiaClient(apiKey: 'your_api_key');
+  final file = File('path/to/file.mp3');
   
   try {
-    // Настройка пользовательского словаря и произношения
+    // Configure custom vocabulary and pronunciation
     final options = TranscriptionOptions(
-      language: 'ru',
-      // Пользовательский словарь для улучшения распознавания специфичных терминов
+      language: 'en',
+      // Custom vocabulary to improve recognition of specific terms
       customVocabularyConfig: CustomVocabularyConfig(
         terms: [
           'Flutter',
@@ -132,50 +132,50 @@ Future<void> main() async {
           'Gladia API',
         ],
       ),
-      // Пользовательское произношение для аббревиатур
+      // Custom pronunciation for abbreviations
       customSpellingConfig: CustomSpellingConfig(
         dictionary: {
-          'API': 'Эй-Пи-Ай',
-          'SDK': 'Эс-Ди-Кей',
+          'API': 'A-P-I',
+          'SDK': 'S-D-K',
         },
       ),
     );
     
-    // Транскрипция файла с опциями
+    // Transcribe file with options
     final result = await client.transcribeFile(
       file: file,
       options: options,
     );
     
-    print('Текст: ${result.text}');
+    print('Text: ${result.text}');
   } catch (e) {
-    print('Ошибка: $e');
+    print('Error: $e');
   }
 }
 ```
 
-## Пример транскрипции с переводом
+## Transcription with Translation Example
 
 ```dart
 import 'dart:io';
 import 'package:gladia/gladia.dart';
 
 Future<void> main() async {
-  final client = GladiaClient(apiKey: 'ваш_api_ключ');
-  final file = File('путь/к/файлу.mp3');
+  final client = GladiaClient(apiKey: 'your_api_key');
+  final file = File('path/to/file.mp3');
   
   try {
-    // Настройка опций с переводом
+    // Configure options with translation
     final options = TranscriptionOptions(
-      language: 'ru',          // Исходный язык аудио
+      language: 'fr',          // Source audio language
       directTranslation: true,
       translation: TranslationConfig(
-        target: 'en',          // Целевой язык перевода
-        model: 'base',         // Модель перевода
+        target: 'en',          // Target translation language
+        model: 'base',         // Translation model
       ),
     );
     
-    // Загрузка и транскрипция файла
+    // Upload and transcribe file
     final uploadResult = await client.uploadAudioFile(file);
     final initResult = await client.initiateTranscription(
       audioUrl: uploadResult.audioUrl,
@@ -184,33 +184,33 @@ Future<void> main() async {
     
     final result = await client.getTranscriptionResult(taskId: initResult.id);
     
-    // Вывод оригинального текста
-    print('Оригинальный текст: ${result.text}');
+    // Output original text
+    print('Original text: ${result.text}');
     
-    // Вывод переведенного текста
+    // Output translated text
     if (result.translation != null) {
-      print('\nПереведенный текст (EN): ${result.translation!.text}');
+      print('\nTranslated text (EN): ${result.translation!.text}');
     }
   } catch (e) {
-    print('Ошибка: $e');
+    print('Error: $e');
   }
 }
 ```
 
-## Пример с колбеками
+## Callback Example
 
 ```dart
 import 'dart:io';
 import 'package:gladia/gladia.dart';
 
 Future<void> main() async {
-  final client = GladiaClient(apiKey: 'ваш_api_ключ');
-  final file = File('путь/к/файлу.mp3');
+  final client = GladiaClient(apiKey: 'your_api_key');
+  final file = File('path/to/file.mp3');
   
   try {
-    // Настройка опций с колбеком
+    // Configure options with callback
     final options = TranscriptionOptions(
-      language: 'ru',
+      language: 'en',
       callbackConfig: CallbackConfig(
         url: 'https://your-server.com/api/transcription-webhook',
         method: 'POST',
@@ -221,146 +221,146 @@ Future<void> main() async {
       ),
     );
     
-    // Загрузка файла
+    // Upload file
     final uploadResult = await client.uploadAudioFile(file);
     
-    // Инициировать транскрипцию с колбеком
+    // Initiate transcription with callback
     final initResult = await client.initiateTranscription(
       audioUrl: uploadResult.audioUrl,
       options: options,
     );
     
-    print('Транскрипция запущена с ID: ${initResult.id}');
-    print('Результаты будут отправлены на URL: ${options.callbackConfig!.url}');
+    print('Transcription started with ID: ${initResult.id}');
+    print('Results will be sent to URL: ${options.callbackConfig!.url}');
   } catch (e) {
-    print('Ошибка: $e');
+    print('Error: $e');
   }
 }
 ```
 
-## Пример интеграции с LLM (языковыми моделями)
+## LLM (Language Model) Integration Example
 
 ```dart
 import 'dart:io';
 import 'package:gladia/gladia.dart';
 
 Future<void> main() async {
-  final client = GladiaClient(apiKey: 'ваш_api_ключ');
-  final file = File('путь/к/файлу.mp3');
+  final client = GladiaClient(apiKey: 'your_api_key');
+  final file = File('path/to/file.mp3');
   
   try {
-    // Настройка опций для интеграции с LLM
+    // Configure options for LLM integration
     final options = TranscriptionOptions(
-      language: 'ru',
-      // Включить обработку текста языковой моделью
+      language: 'en',
+      // Enable text processing with language model
       audioToLLM: true,
       audioToLLMConfig: AudioToLLMConfig(
-        prompt: 'Создай краткое резюме следующего разговора:',
+        prompt: 'Create a brief summary of the following conversation:',
         model: 'gpt-3.5-turbo',
       ),
     );
     
-    // Транскрипция файла с опциями
+    // Transcribe file with options
     final result = await client.transcribeFile(
       file: file,
       options: options,
     );
     
-    // Вывод оригинального текста
-    print('Оригинальный текст: ${result.text}');
+    // Output original text
+    print('Original text: ${result.text}');
     
-    // Вывод результатов обработки LLM
+    // Output LLM processing results
     if (result.audioToLLM != null) {
-      print('\nРезультат обработки LLM:');
+      print('\nLLM processing result:');
       print(result.audioToLLM!.result);
     }
   } catch (e) {
-    print('Ошибка: $e');
+    print('Error: $e');
   }
 }
 ```
 
-## Пример с сегментацией и извлечением структурированных данных
+## Segmentation and Structured Data Extraction Example
 
 ```dart
 import 'dart:io';
 import 'package:gladia/gladia.dart';
 
 Future<void> main() async {
-  final client = GladiaClient(apiKey: 'ваш_api_ключ');
-  final file = File('путь/к/файлу.mp3');
+  final client = GladiaClient(apiKey: 'your_api_key');
+  final file = File('path/to/file.mp3');
   
   try {
-    // Настройка извлечения структурированных данных
+    // Configure structured data extraction
     final options = TranscriptionOptions(
-      language: 'ru',
-      // Включить извлечение структурированных данных
+      language: 'en',
+      // Enable structured data extraction
       structuredDataExtraction: true,
       structuredDataExtractionConfig: StructuredDataExtractionConfig(
         schema: {
           "type": "object",
           "properties": {
-            "клиент": {
+            "customer": {
               "type": "object",
               "properties": {
-                "имя": {"type": "string"},
-                "телефон": {"type": "string"},
+                "name": {"type": "string"},
+                "phone": {"type": "string"},
                 "email": {"type": "string"},
               },
-              "required": ["имя"]
+              "required": ["name"]
             },
-            "заказ": {
+            "order": {
               "type": "object",
               "properties": {
-                "номер": {"type": "string"},
-                "сумма": {"type": "number"},
-                "товары": {
+                "number": {"type": "string"},
+                "amount": {"type": "number"},
+                "items": {
                   "type": "array",
                   "items": {"type": "string"}
                 }
               }
             }
           },
-          "required": ["клиент"]
+          "required": ["customer"]
         },
       ),
     );
     
-    // Транскрипция файла с опциями
+    // Transcribe file with options
     final result = await client.transcribeFile(
       file: file,
       options: options,
     );
     
-    // Вывод полного текста
-    print('Полный текст: ${result.text}');
+    // Output full text
+    print('Full text: ${result.text}');
     
-    // Вывод извлеченных структурированных данных
+    // Output extracted structured data
     if (result.structuredData != null) {
-      print('\nИзвлеченные данные:');
-      print('Клиент: ${result.structuredData?['клиент']?['имя']}');
-      print('Телефон: ${result.structuredData?['клиент']?['телефон']}');
-      print('Email: ${result.structuredData?['клиент']?['email']}');
+      print('\nExtracted data:');
+      print('Customer: ${result.structuredData?['customer']?['name']}');
+      print('Phone: ${result.structuredData?['customer']?['phone']}');
+      print('Email: ${result.structuredData?['customer']?['email']}');
       
-      if (result.structuredData?['заказ'] != null) {
-        print('Номер заказа: ${result.structuredData?['заказ']?['номер']}');
-        print('Сумма: ${result.structuredData?['заказ']?['сумма']}');
+      if (result.structuredData?['order'] != null) {
+        print('Order number: ${result.structuredData?['order']?['number']}');
+        print('Amount: ${result.structuredData?['order']?['amount']}');
         
-        if (result.structuredData?['заказ']?['товары'] is List) {
-          print('Товары:');
-          for (final item in result.structuredData!['заказ']['товары']) {
+        if (result.structuredData?['order']?['items'] is List) {
+          print('Items:');
+          for (final item in result.structuredData!['order']['items']) {
             print('- $item');
           }
         }
       }
     }
   } catch (e) {
-    print('Ошибка: $e');
+    print('Error: $e');
   }
 }
 ```
 
-## Обработка результатов транскрипции в реальном времени
+## Real-time Transcription Results Processing
 
 ```dart
 import 'dart:async';
@@ -369,31 +369,31 @@ import 'dart:io';
 import 'package:gladia/gladia.dart';
 
 Future<void> main() async {
-  final client = GladiaClient(apiKey: 'ваш_api_ключ');
+  final client = GladiaClient(apiKey: 'your_api_key');
   
-  // Собственный обработчик результатов транскрипции
+  // Custom transcription results handler
   class TranscriptionHandler {
     String _fullText = '';
-    final List<String> _keywords = ['важно', 'срочно', 'проблема', 'ошибка'];
+    final List<String> _keywords = ['important', 'urgent', 'problem', 'error'];
     
     void onTranscriptionResult(LiveTranscriptionResult result) {
-      // Обновляем полный текст только для финальных результатов
+      // Update full text only for final results
       if (result.metadata?.isFinal == true) {
         _fullText += ' ${result.text}';
-        print('Добавлен финальный текст: ${result.text}');
+        print('Final text added: ${result.text}');
         
-        // Поиск ключевых слов
+        // Search for keywords
         for (final keyword in _keywords) {
           if (result.text.toLowerCase().contains(keyword)) {
-            print('⚠️ ОБНАРУЖЕНО КЛЮЧЕВОЕ СЛОВО: $keyword');
+            print('⚠️ KEYWORD DETECTED: $keyword');
           }
         }
         
-        // Сохранение полного текста в файл
+        // Save full text to file
         File('transcription_output.txt').writeAsStringSync(_fullText);
       } else {
-        // Промежуточный результат
-        print('Промежуточный: ${result.text}');
+        // Interim result
+        print('Interim: ${result.text}');
       }
     }
     
@@ -407,7 +407,7 @@ Future<void> main() async {
     final options = LiveTranscriptionOptions(
       encoding: 'pcm',
       sampleRate: 16000,
-      language: 'ru',
+      language: 'en',
       interim: true,
     );
     
@@ -416,43 +416,43 @@ Future<void> main() async {
     socket = client.createLiveTranscriptionSocket(
       websocketUrl: initResult.websocketUrl,
       onTranscriptionResult: handler.onTranscriptionResult,
-      onError: (error) => print('Ошибка: $error'),
-      onDone: () => print('Соединение закрыто'),
+      onError: (error) => print('Error: $error'),
+      onDone: () => print('Connection closed'),
     );
     
     await socket.connect();
     
-    // Чтение аудиофайла и отправка данных по частям
-    // (в реальном приложении это может быть поток с микрофона)
-    final audioFile = File('путь/к/файлу.wav');
+    // Read audio file and send data in chunks
+    // (in a real application this could be a stream from a microphone)
+    final audioFile = File('path/to/file.wav');
     final bytes = await audioFile.readAsBytes();
     
-    const chunkSize = 4096; // Размер чанка (4KB)
+    const chunkSize = 4096; // Chunk size (4KB)
     for (var i = 0; i < bytes.length; i += chunkSize) {
       final end = (i + chunkSize < bytes.length) ? i + chunkSize : bytes.length;
       final chunk = bytes.sublist(i, end);
       
       socket.sendAudioData(chunk);
       
-      // Имитация потоковой передачи с задержкой
+      // Simulate streaming with delay
       await Future.delayed(Duration(milliseconds: 100));
     }
     
-    // Отправка сигнала завершения потока
+    // Send end of stream signal
     socket.sendEndOfStream();
     
-    // Ожидание обработки последних данных
+    // Wait for processing of last data
     await Future.delayed(Duration(seconds: 3));
     
-    print('\nИтоговый текст:');
+    print('\nFinal text:');
     print(handler.getFullText());
   } catch (e) {
-    print('Ошибка: $e');
+    print('Error: $e');
   } finally {
-    // Закрытие соединения
+    // Close connection
     await socket?.close();
   }
 }
 ```
 
-Все приведенные выше примеры демонстрируют расширенные возможности Gladia API. Для получения дополнительной информации об API и его параметрах, см. [справочник API](../doc/api_reference.md) и [руководство по продвинутому использованию](../doc/advanced_usage.md). 
+All of the examples above demonstrate the advanced capabilities of the Gladia API. For more information about the API and its parameters, see the [API reference](../doc/api_reference.md) and the [advanced usage guide](../doc/advanced_usage.md). 

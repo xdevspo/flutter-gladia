@@ -51,7 +51,7 @@ class CallbackConfig {
   @JsonKey(name: 'receive_lifecycle_events')
   final bool? receiveLifecycleEvents;
 
-  CallbackConfig({
+  const CallbackConfig({
     this.url,
     this.receiveFinalTranscripts,
     this.receiveSpeechEvents,
