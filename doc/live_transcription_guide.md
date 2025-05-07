@@ -1,86 +1,86 @@
-# Руководство по транскрипции в реальном времени с Gladia API
+# Real-time Transcription Guide with Gladia API
 
-Это руководство подробно описывает процесс реализации транскрипции речи в реальном времени с использованием Flutter SDK для Gladia API.
+This guide details the process of implementing real-time speech transcription using the Flutter SDK for Gladia API.
 
-## Содержание
+## Contents
 
-1. [Введение](#введение)
-2. [Архитектура решения](#архитектура-решения)
-3. [Основные шаги](#основные-шаги)
-4. [Установка соединения](#установка-соединения)
-5. [Захват и отправка аудио](#захват-и-отправка-аудио)
-6. [Обработка результатов](#обработка-результатов)
-7. [Закрытие сессии](#закрытие-сессии)
-8. [Устранение проблем](#устранение-проблем)
-9. [Пример полной реализации](#пример-полной-реализации)
+1. [Introduction](#introduction)
+2. [Solution Architecture](#solution-architecture)
+3. [Main Steps](#main-steps)
+4. [Establishing a Connection](#establishing-a-connection)
+5. [Capturing and Sending Audio](#capturing-and-sending-audio)
+6. [Processing Results](#processing-results)
+7. [Closing the Session](#closing-the-session)
+8. [Troubleshooting](#troubleshooting)
+9. [Complete Implementation Example](#complete-implementation-example)
 
-## Введение
+## Introduction
 
-Транскрипция в реальном времени (Live Transcription) — это процесс распознавания речи и её преобразования в текст по мере поступления аудио данных. Gladia API предоставляет мощный механизм для реализации этой функциональности через WebSocket соединение.
+Live Transcription is the process of recognizing speech and converting it to text as audio data arrives. Gladia API provides a powerful mechanism for implementing this functionality through a WebSocket connection.
 
-### Основные преимущества:
+### Key Benefits:
 
-- Низкая задержка распознавания
-- Мультиязыковая поддержка
-- Высокая точность транскрипции
-- Поддержка промежуточных и финальных результатов
-- Возможность получать дополнительные метаданные (диаризация, пунктуация и т.д.)
+- Low recognition latency
+- Multi-language support
+- High transcription accuracy
+- Support for interim and final results
+- Ability to receive additional metadata (diarization, punctuation, etc.)
 
-## Архитектура решения
+## Solution Architecture
 
-Транскрипция в реальном времени базируется на следующей архитектуре:
+Real-time transcription is based on the following architecture:
 
 ```
     +----------------+          +-------------------+
-    |                |  Запрос  |                   |
-    | Ваше приложение| -------> | Gladia REST API   |
+    |                |  Request |                   |
+    | Your app       | -------> | Gladia REST API   |
     |                |          |                   |
     +----------------+          +-------------------+
             |                             |
-            | Получение URL               | Создание сессии
-            | для WebSocket               |
+            | Get URL                     | Create session
+            | for WebSocket               |
             v                             v
     +----------------+          +-------------------+
-    |                |  Аудио   |                   |
+    |                |  Audio   |                   |
     | WebSocket      | -------> | Gladia WebSocket  |
-    | Клиент         |          | Сервер            |
+    | Client         |          | Server            |
     |                | <------- |                   |
-    |                |  Текст   |                   |
+    |                |  Text    |                   |
     +----------------+          +-------------------+
 ```
 
-## Основные шаги
+## Main Steps
 
-Процесс транскрипции в реальном времени включает следующие этапы:
+The real-time transcription process includes the following stages:
 
-1. Инициализация сессии через REST API
-2. Установка WebSocket соединения
-3. Запись и отправка аудио данных
-4. Получение и обработка результатов транскрипции
-5. Корректное завершение сессии
+1. Session initialization via REST API
+2. Establishing a WebSocket connection
+3. Recording and sending audio data
+4. Receiving and processing transcription results
+5. Properly ending the session
 
-## Установка соединения
+## Establishing a Connection
 
-### 1. Инициализация сессии
+### 1. Session Initialization
 
-Первым шагом является инициализация сессии через REST API Gladia:
+The first step is to initialize a session through the Gladia REST API:
 
 ```dart
 final sessionResult = await gladiaClient.initLiveTranscription(
-  sampleRate: 16000,  // Частота дискретизации в Гц
-  bitDepth: 16,       // Глубина сэмпла в битах
-  channels: 1,        // Количество аудио каналов (1 = моно)
-  encoding: 'wav/pcm', // Формат кодирования аудио
+  sampleRate: 16000,  // Sampling rate in Hz
+  bitDepth: 16,       // Sample depth in bits
+  channels: 1,        // Number of audio channels (1 = mono)
+  encoding: 'wav/pcm', // Audio encoding format
 );
 
-// Получение идентификатора сессии и URL для WebSocket
+// Get session ID and WebSocket URL
 final sessionId = sessionResult.id;
 final webSocketUrl = sessionResult.url;
 ```
 
-### 2. Создание WebSocket соединения
+### 2. Creating a WebSocket Connection
 
-После инициализации сессии необходимо установить WebSocket соединение:
+After initializing the session, you need to establish a WebSocket connection:
 
 ```dart
 final socket = gladiaClient.createLiveTranscriptionSocket(
@@ -91,16 +91,16 @@ final socket = gladiaClient.createLiveTranscriptionSocket(
 );
 ```
 
-## Захват и отправка аудио
+## Capturing and Sending Audio
 
-### 1. Настройка захвата аудио
+### 1. Setting Up Audio Capture
 
-Для захвата аудио можно использовать пакет `record`:
+For capturing audio, you can use the `record` package:
 
 ```dart
 final audioRecorder = AudioRecorder();
 
-// Начало записи
+// Start recording
 await audioRecorder.start(
   RecordConfig(
     encoder: AudioEncoder.wav,
@@ -112,12 +112,12 @@ await audioRecorder.start(
 );
 ```
 
-### 2. Отправка аудио данных
+### 2. Sending Audio Data
 
-Отправка аудио осуществляется через WebSocket. Для этого нужно периодически считывать аудио данные и отправлять их на сервер:
+Audio is sent through WebSocket. For this, you need to periodically read audio data and send it to the server:
 
 ```dart
-// Пример периодической отправки аудио
+// Example of periodic audio sending
 Timer.periodic(Duration(milliseconds: 300), (timer) async {
   if (!isRecording || socket == null || !socket.isConnected) {
     timer.cancel();
@@ -125,11 +125,11 @@ Timer.periodic(Duration(milliseconds: 300), (timer) async {
   }
 
   try {
-    // Чтение аудио данных из файла
+    // Read audio data from file
     final file = File(tempFilePath);
     final fileLength = await file.length();
     
-    // Пропускаем заголовок WAV (44 байта)
+    // Skip WAV header (44 bytes)
     final wavHeaderSize = 44;
     
     if (fileLength > wavHeaderSize) {
@@ -139,45 +139,45 @@ Timer.periodic(Duration(milliseconds: 300), (timer) async {
       final audioBytes = await raf.read(fileLength - wavHeaderSize);
       await raf.close();
       
-      // Отправка аудио данных
+      // Send audio data
       socket.sendAudioData(audioBytes);
     }
   } catch (e) {
-    print('Ошибка при отправке аудио: $e');
+    print('Error sending audio: $e');
   }
 });
 ```
 
-### 3. Форматы отправки аудио
+### 3. Audio Sending Formats
 
-Gladia API поддерживает несколько форматов отправки аудио:
+Gladia API supports several formats for sending audio:
 
-- **Бинарные данные** - напрямую отправка PCM-аудио через `sendAudioData()`
-- **Base64** - кодированное аудио через `sendBase64AudioData()`
+- **Binary data** - direct sending of PCM audio via `sendAudioData()`
+- **Base64** - encoded audio via `sendBase64AudioData()`
 
 ```dart
-// Отправка бинарных данных
+// Sending binary data
 socket.sendAudioData(audioBytes);
 
-// Отправка в формате base64
+// Sending in base64 format
 socket.sendBase64AudioData(audioBytes);
 ```
 
-## Обработка результатов
+## Processing Results
 
-### 1. Типы сообщений
+### 1. Message Types
 
-Сервер Gladia отправляет несколько типов сообщений:
+The Gladia server sends several types of messages:
 
-- `transcript` - результаты транскрипции
-- `ready` - сервер готов к получению аудио
-- `error` - ошибка при обработке
+- `transcript` - transcription results
+- `ready` - server is ready to receive audio
+- `error` - error during processing
 
-### 2. Обработка сообщений транскрипции
+### 2. Processing Transcription Messages
 
 ```dart
 void handleTranscriptionMessage(dynamic message) {
-  // Обработка сообщения о транскрипции
+  // Processing a transcription message
   if (message is Map<String, dynamic> && message['type'] == 'transcript') {
     final transcriptionMessage = TranscriptionMessage.fromJson(message);
     final text = transcriptionMessage.data.utterance.text;
@@ -185,100 +185,344 @@ void handleTranscriptionMessage(dynamic message) {
 
     if (text.isNotEmpty) {
       if (isFinal) {
-        // Обработка финального результата
-        print('Финальная транскрипция: $text');
+        // Processing the final result
+        print('Final transcription: $text');
       } else {
-        // Обработка промежуточного результата
-        print('Промежуточная транскрипция: $text');
+        // Processing interim result
+        print('Interim transcription: $text');
       }
     }
   } 
-  // Обработка сообщения о готовности
+  // Processing a ready message
   else if (message is Map<String, dynamic> && message['type'] == 'ready') {
-    print('Сессия готова к приему аудио');
+    print('Session ready to receive audio');
   }
-  // Обработка ошибок
+  // Processing errors
   else if (message is Map<String, dynamic> && message['type'] == 'error') {
-    final errorMessage = message['data']?['message'] ?? 'Неизвестная ошибка';
-    print('Ошибка от сервера: $errorMessage');
+    print('Error from server: ${message['data']}');
   }
 }
 ```
 
-## Закрытие сессии
+### 3. End-of-Stream Signal
 
-Важно корректно закрыть сессию, чтобы освободить ресурсы и снизить риск достижения лимитов API:
-
-### 1. Остановка записи
+When you finish sending audio, you need to send an end-of-stream signal to the server:
 
 ```dart
-await audioRecorder.stop();
+// Send end-of-stream signal
+socket.sendEndOfStream();
 ```
 
-### 2. Отправка сигнала завершения записи
+## Closing the Session
+
+After completing the transcription, close the WebSocket and session:
 
 ```dart
-if (socket != null && socket.isConnected) {
-  socket.sendStopRecording();
+// Close WebSocket
+await socket.close();
+
+// Close session on server
+try {
+  await dio.delete('v2/live/$sessionId');
+  print('Session successfully closed');
+} catch (e) {
+  print('Error closing session: $e');
 }
 ```
 
-### 3. Закрытие WebSocket соединения
+## Troubleshooting
+
+### Common Problems and Solutions
+
+1. **Connection Issues**
+
+   - Check your internet connection
+   - Verify your API key is valid
+   - Try resetting all active sessions
+   
+   ```dart
+   await dio.delete('v2/live/reset');
+   ```
+
+2. **No Transcription Results**
+
+   - Check audio format and parameters
+   - Verify audio data is being sent properly
+   - Check audio volume levels
+
+3. **High Latency**
+
+   - Adjust audio chunk size
+   - Optimize sending frequency
+   - Check your internet connection quality
+
+## Complete Implementation Example
+
+Here's a complete example of implementing real-time transcription in a Flutter application:
 
 ```dart
-if (socket != null && socket.isConnected) {
-  socket.close();
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:gladia/gladia.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+class LiveTranscriptionExample extends StatefulWidget {
+  @override
+  _LiveTranscriptionExampleState createState() => _LiveTranscriptionExampleState();
 }
-```
 
-### 4. Закрытие сессии на сервере
-
-```dart
-// Отправка DELETE запроса для закрытия сессии
-await dio.delete('v2/live/$sessionId');
-```
-
-## Устранение проблем
-
-### 1. Проблема с лимитом одновременных сессий
-
-В бесплатном тарифе Gladia API существует лимит на количество одновременных сессий (обычно 1). Если вы столкнулись с ошибкой:
-
-```
-GladiaApiException: Maximum number of concurrent sessions reached
-```
-
-Решения:
-- Используйте функцию сброса всех сессий:
-  ```dart
-  await dio.delete('v2/live/reset');
-  ```
-- Убедитесь, что каждая сессия корректно закрывается после использования
-
-### 2. Проблемы с форматом аудио
-
-Если вы не получаете транскрипцию:
-- Проверьте параметры аудио (sampleRate, bitDepth, channels)
-- Удостоверьтесь, что отправляются действительные аудио данные (не пустые, не только заголовок)
-- Попробуйте другой формат кодирования (например, wav/pcm вместо mp3)
-
-### 3. Проблемы с WebSocket соединением
-
-- Проверьте сетевое подключение
-- Добавьте обработку ошибок в onError колбек
-- Настройте автоматические переподключения при разрыве соединения
-
-## Пример полной реализации
-
-Полный пример реализации транскрипции в реальном времени с использованием Gladia API доступен в файле `example/live_audio_transcription_example.dart`.
-
-Основные компоненты примера:
-- Инициализация и управление сессией
-- Захват аудио с микрофона
-- Отправка аудио через WebSocket
-- Обработка результатов транскрипции
-- Корректное закрытие сессии
-- Обработка ошибок
+class _LiveTranscriptionExampleState extends State<LiveTranscriptionExample> {
+  // API key
+  final String apiKey = 'your_api_key';
+  
+  // Client and socket
+  late GladiaClient gladiaClient;
+  LiveTranscriptionSocket? socket;
+  
+  // Recording
+  final record = AudioRecorder();
+  String tempFilePath = '';
+  bool isRecording = false;
+  
+  // Transcription
+  String transcription = '';
+  Timer? sendingTimer;
+  
+  @override
+  void initState() {
+    super.initState();
+    gladiaClient = GladiaClient(apiKey: apiKey);
+    _prepareTempFile();
+  }
+  
+  @override
+  void dispose() {
+    _stopRecording();
+    sendingTimer?.cancel();
+    socket?.close();
+    super.dispose();
+  }
+  
+  // Prepare temp file for recording
+  Future<void> _prepareTempFile() async {
+    final tempDir = await getTemporaryDirectory();
+    tempFilePath = '${tempDir.path}/temp_audio.wav';
+  }
+  
+  // Start recording and transcription
+  Future<void> _startRecording() async {
+    // Check microphone permission
+    if (await Permission.microphone.request().isGranted) {
+      try {
+        // 1. Initialize transcription session
+        final sessionResult = await gladiaClient.initLiveTranscription(
+          options: LiveTranscriptionOptions(
+            encoding: 'pcm',
+            sampleRate: 16000,
+            language: 'en',
+          ),
+        );
+        
+        // 2. Create WebSocket
+        socket = gladiaClient.createLiveTranscriptionSocket(
+          sessionUrl: sessionResult.url,
+          onMessage: _handleMessage,
+          onDone: () {
+            print('Connection closed');
+            _reconnectWebSocket(sessionResult.url);
+          },
+          onError: (error) {
+            print('WebSocket error: $error');
+            _reconnectWebSocket(sessionResult.url);
+          },
+        );
+        
+        // 3. Connect WebSocket
+        await socket!.connect();
+        
+        // 4. Start recording
+        await record.start(
+          RecordConfig(
+            encoder: AudioEncoder.wav,
+            bitRate: 256000,
+            sampleRate: 16000,
+            numChannels: 1,
+          ),
+          path: tempFilePath,
+        );
+        
+        // 5. Update state
+        setState(() {
+          isRecording = true;
+          transcription = '';
+        });
+        
+        // 6. Start sending audio data
+        sendingTimer = Timer.periodic(Duration(milliseconds: 300), _sendAudioChunk);
+        
+      } catch (e) {
+        print('Error starting recording: $e');
+      }
+    } else {
+      print('Microphone permission denied');
+    }
+  }
+  
+  // Stop recording and transcription
+  Future<void> _stopRecording() async {
+    // Cancel timer
+    sendingTimer?.cancel();
+    sendingTimer = null;
+    
+    if (isRecording) {
+      // Stop recording
+      await record.stop();
+      
+      // End stream
+      socket?.sendEndOfStream();
+      
+      // Close connection
+      await socket?.close();
+      socket = null;
+      
+      // Update state
+      setState(() {
+        isRecording = false;
+      });
+    }
+  }
+  
+  // Send audio data
+  void _sendAudioChunk(Timer timer) async {
+    if (!isRecording || socket == null) {
+      timer.cancel();
+      return;
+    }
+    
+    try {
+      final file = File(tempFilePath);
+      if (await file.exists()) {
+        final fileLength = await file.length();
+        
+        // Skip WAV header
+        if (fileLength > 44) {
+          final raf = await file.open(mode: FileMode.read);
+          await raf.setPosition(44);
+          
+          final audioBytes = await raf.read(fileLength - 44);
+          await raf.close();
+          
+          // Send audio data
+          socket!.sendAudioData(audioBytes);
+        }
+      }
+    } catch (e) {
+      print('Error sending audio: $e');
+    }
+  }
+  
+  // Handle WebSocket messages
+  void _handleMessage(dynamic message) {
+    if (message is Map<String, dynamic>) {
+      if (message['type'] == 'transcript') {
+        final data = message['data'];
+        if (data != null && data['utterance'] != null) {
+          final text = data['utterance']['text'];
+          final isFinal = data['is_final'] ?? false;
+          
+          if (text != null && text.isNotEmpty) {
+            setState(() {
+              if (isFinal) {
+                // Add new line for final results
+                transcription += text + '\n';
+              } else {
+                // Replace last line for interim results
+                final lines = transcription.split('\n');
+                if (lines.isNotEmpty) {
+                  lines.removeLast();
+                  lines.add(text);
+                  transcription = lines.join('\n');
+                } else {
+                  transcription = text;
+                }
+              }
+            });
+          }
+        }
+      }
+    }
+  }
+  
+  // Reconnect WebSocket
+  Future<void> _reconnectWebSocket(String url) async {
+    if (!isRecording) return;
+    
+    try {
+      print('Attempting to reconnect...');
+      socket = gladiaClient.createLiveTranscriptionSocket(
+        sessionUrl: url,
+        onMessage: _handleMessage,
+        onDone: () => _reconnectWebSocket(url),
+        onError: (error) => _reconnectWebSocket(url),
+      );
+      
+      await socket!.connect();
+      print('Successfully reconnected');
+    } catch (e) {
+      print('Reconnection error: $e');
+      
+      // Try again later
+      Future.delayed(Duration(seconds: 3), () => _reconnectWebSocket(url));
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Live Transcription'),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: SingleChildScrollView(
+                  child: Text(
+                    transcription.isEmpty ? 'Transcription will appear here' : transcription,
+                    style: TextStyle(fontSize: 16.0),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: isRecording ? _stopRecording : _startRecording,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isRecording ? Colors.red : Colors.blue,
+                padding: EdgeInsets.symmetric(vertical: 12.0),
+              ),
+              child: Text(
+                isRecording ? 'Stop Recording' : 'Start Recording',
+                style: TextStyle(fontSize: 16.0),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 ## Ограничения и рекомендации
 

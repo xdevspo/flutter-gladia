@@ -1,49 +1,49 @@
-# Ограничения и лимиты Gladia API
+# Gladia API Limitations and Limits
 
-Этот документ содержит информацию о существующих ограничениях при работе с Gladia API, а также рекомендации по их обходу.
+This document contains information about existing limitations when working with the Gladia API, as well as recommendations for working around them.
 
-## Основные лимиты
+## Basic Limits
 
-### Бесплатный тариф
+### Free Tier
 
-| Параметр | Ограничение |
-|----------|-------------|
-| Количество одновременных сессий | 1 |
-| Месячный лимит запросов | Ограничен |
-| Длительность аудио | До 2 часов |
-| Размер файла | До 100 МБ |
+| Parameter | Limitation |
+|-----------|------------|
+| Number of concurrent sessions | 1 |
+| Monthly request limit | Limited |
+| Audio duration | Up to 2 hours |
+| File size | Up to 100 MB |
 
-### Платные тарифы
+### Paid Plans
 
-На платных тарифах ограничения значительно выше. Точные лимиты можно увидеть на [странице тарифов Gladia](https://app.gladia.io/pricing).
+On paid plans, the limitations are significantly higher. Exact limits can be seen on the [Gladia pricing page](https://app.gladia.io/pricing).
 
-## Ограничения транскрипции в реальном времени
+## Real-time Transcription Limitations
 
-### Максимальное количество сессий
+### Maximum Number of Sessions
 
-В бесплатном тарифе Gladia API разрешена только **одна** активная сессия транскрипции в реальном времени. При попытке создать вторую сессию вы получите ошибку:
+In the free Gladia API tier, only **one** active real-time transcription session is allowed. When attempting to create a second session, you will receive an error:
 
 ```
 GladiaApiException: Maximum number of concurrent sessions reached. Your Free Trial plan allows only up to 1 sessions. Please visit https://app.gladia.io/ to upgrade your plan. (Status: 429)
 ```
 
-#### Решение проблемы
+#### Solutions
 
-1. **Явное закрытие сессий**
+1. **Explicitly Close Sessions**
 
-   Убедитесь, что вы корректно закрываете сессию после использования:
+   Make sure you properly close the session after use:
 
    ```dart
-   // Закрытие WebSocket
+   // Close WebSocket
    socket.close();
    
-   // Закрытие сессии на сервере
+   // Close session on the server
    await dio.delete('v2/live/$sessionId');
    ```
 
-2. **Сброс всех активных сессий**
+2. **Reset All Active Sessions**
 
-   Если возникает ошибка с превышением лимита, можно сбросить все активные сессии:
+   If you encounter an error exceeding the limit, you can reset all active sessions:
 
    ```dart
    final dio = Dio()
@@ -56,46 +56,46 @@ GladiaApiException: Maximum number of concurrent sessions reached. Your Free Tri
    await dio.delete('v2/live/reset');
    ```
 
-3. **Автоматический сброс при старте приложения**
+3. **Automatic Reset on Application Start**
 
-   Рекомендуется добавить автоматический сброс сессий при запуске приложения:
+   It is recommended to add an automatic session reset when starting the application:
 
    ```dart
    Future<void> resetActiveSessions() async {
      try {
-       // Отправка запроса на сброс всех активных сессий
+       // Send request to reset all active sessions
        await dio.delete('v2/live/reset');
-       print('Активные сессии сброшены');
+       print('Active sessions reset');
      } catch (e) {
-       print('Ошибка при сбросе сессий: $e');
+       print('Error when resetting sessions: $e');
      }
    }
    ```
 
-### Длительность неактивности
+### Inactivity Duration
 
-Если в течение определенного времени (обычно 30-60 секунд) сессия не получает аудио данных, она может быть автоматически закрыта сервером.
+If the session does not receive audio data for a certain period (usually 30-60 seconds), it may be automatically closed by the server.
 
-#### Решение
+#### Solution
 
-1. **Отправка пинг-сигналов**
+1. **Send Ping Signals**
 
-   При паузах в записи отправляйте пустые аудио-фреймы или специальные пинг-сообщения для поддержания соединения.
+   During recording pauses, send empty audio frames or special ping messages to maintain the connection.
 
-2. **Переподключение при разрыве**
+2. **Reconnect When Disconnected**
 
-   Реализуйте логику автоматического переподключения при обнаружении разрыва соединения.
+   Implement logic for automatic reconnection when a connection break is detected.
 
-### Форматы аудио
+### Audio Formats
 
-Не все форматы аудио одинаково хорошо поддерживаются API. Наилучшие результаты дают:
+Not all audio formats are equally well supported by the API. The best results are given by:
 
-- WAV/PCM (16-bit, 16kHz, моно)
-- RAW PCM (без заголовков)
+- WAV/PCM (16-bit, 16kHz, mono)
+- RAW PCM (without headers)
 
-#### Решение проблем с форматом аудио
+#### Solutions for Audio Format Issues
 
-1. **Используйте рекомендуемые параметры**
+1. **Use Recommended Parameters**
 
    ```dart
    await audioRecorder.start(
@@ -109,27 +109,27 @@ GladiaApiException: Maximum number of concurrent sessions reached. Your Free Tri
    );
    ```
 
-2. **Пропускайте заголовки WAV при чтении**
+2. **Skip WAV Headers When Reading**
 
-   Если вы используете WAV формат, при отправке аудио пропускайте первые 44 байта (заголовок WAV):
+   If you use WAV format, skip the first 44 bytes (WAV header) when sending audio:
 
    ```dart
    final raf = await file.open(mode: FileMode.read);
-   await raf.setPosition(44); // Пропускаем WAV заголовок
+   await raf.setPosition(44); // Skip WAV header
    
    final audioBytes = await raf.read(fileLength - 44);
    await raf.close();
    ```
 
-## Обработка ошибок сети
+## Network Error Handling
 
-### Таймауты запросов
+### Request Timeouts
 
-При работе с API могут возникать таймауты запросов, особенно при нестабильном соединении.
+When working with the API, request timeouts can occur, especially with unstable connections.
 
-#### Решение
+#### Solution
 
-1. **Установка таймаутов для запросов**
+1. **Set Timeouts for Requests**
 
    ```dart
    final dio = Dio()
@@ -142,14 +142,14 @@ GladiaApiException: Maximum number of concurrent sessions reached. Your Free Tri
      };
    ```
 
-2. **Обработка таймаутов**
+2. **Handle Timeouts**
 
    ```dart
    try {
      await dio.delete('v2/live/$sessionId').timeout(
        const Duration(seconds: 5),
        onTimeout: () {
-         print('Таймаут при закрытии сессии');
+         print('Timeout when closing session');
          return Response(
            requestOptions: RequestOptions(path: 'v2/live/$sessionId'),
            statusCode: 408,
@@ -157,73 +157,113 @@ GladiaApiException: Maximum number of concurrent sessions reached. Your Free Tri
        },
      );
    } catch (e) {
-     print('Ошибка при закрытии сессии: $e');
+     print('Error when closing session: $e');
    }
    ```
 
-### Разрывы WebSocket соединения
+### WebSocket Connection Breaks
 
-WebSocket соединения могут разрываться по разным причинам: проблемы с сетью, перезагрузка серверов API и т.д.
+WebSocket connections can break for various reasons: network issues, API server restarts, etc.
 
-#### Решение
+#### Solution
 
-1. **Обработка событий закрытия соединения**
+1. **Handle Connection Close Events**
 
    ```dart
    socket = gladiaClient.createLiveTranscriptionSocket(
      sessionUrl: sessionResult.url,
      onMessage: handleMessage,
      onDone: () {
-       print('Соединение закрыто');
+       print('Connection closed');
        reconnectWebSocket();
      },
      onError: (error) {
-       print('Ошибка WebSocket: $error');
+       print('WebSocket error: $error');
        reconnectWebSocket();
      },
    );
    ```
 
-2. **Функция переподключения**
+2. **Reconnection Function**
 
    ```dart
    Future<void> reconnectWebSocket() async {
      if (!shouldReconnect) return;
      
      try {
-       print('Попытка переподключения...');
+       print('Attempting to reconnect...');
        socket = gladiaClient.createLiveTranscriptionSocket(
          sessionUrl: sessionResult.url,
          onMessage: handleMessage,
          onDone: () => reconnectWebSocket(),
          onError: (error) => reconnectWebSocket(),
        );
+       
+       await socket.connect();
+       print('Successfully reconnected');
      } catch (e) {
-       print('Ошибка при переподключении: $e');
-       // Пробуем снова через некоторое время
-       Future.delayed(Duration(seconds: 2), reconnectWebSocket);
+       print('Reconnection error: $e');
+       
+       // Try again after a delay
+       await Future.delayed(Duration(seconds: 3));
+       reconnectWebSocket();
      }
    }
    ```
 
-## Рекомендации для стабильной работы
+## Processing Large Files
 
-1. **Управляйте жизненным циклом сессий**
-   - Явно закрывайте сессии после использования
-   - Реализуйте обработку жизненного цикла приложения для корректного закрытия при выходе
+### File Size Limitations
 
-2. **Оптимизируйте отправку аудио**
-   - Отправляйте аудио блоками оптимального размера (4-10 Кб)
-   - Выбирайте подходящий интервал отправки (300-500 мс)
+There is a file size limit for uploading to the Gladia API (100MB in the free tier).
 
-3. **Обрабатывайте ошибки**
-   - Добавьте логирование всех этапов работы с API
-   - Реализуйте логику повторных попыток при временных сбоях
+#### Solution
 
-4. **Тестируйте разные форматы аудио**
-   - Если транскрипция не работает с одним форматом, попробуйте другой
-   - Проверьте корректность параметров аудио
+1. **Split Large Files**
 
-## Дополнительная информация
+   For large files, split them into smaller parts and process sequentially:
 
-Для получения актуальной информации о лимитах и ограничениях API, обратитесь к [официальной документации Gladia](https://docs.gladia.io/) 
+   ```dart
+   Future<String> processLargeFile(File file) async {
+     final totalSize = await file.length();
+     final partSize = 95 * 1024 * 1024; // 95 MB chunks
+     final partsCount = (totalSize / partSize).ceil();
+     
+     // Create temporary directory for parts
+     final tempDir = await Directory.systemTemp.createTemp('gladia_parts');
+     
+     // Result builder
+     final fullTranscription = StringBuffer();
+     
+     try {
+       // Split and process parts
+       for (int i = 0; i < partsCount; i++) {
+         final partStart = i * partSize;
+         final partEnd = min((i + 1) * partSize, totalSize);
+         
+         print('Processing part ${i + 1} of $partsCount...');
+         
+         // Create part file
+         final partFile = File('${tempDir.path}/part_$i.mp3');
+         final partData = await file.openRead(partStart, partEnd).toList();
+         await partFile.writeAsBytes(partData.expand((x) => x).toList());
+         
+         // Process part
+         final result = await client.transcribeFile(file: partFile);
+         fullTranscription.writeln(result.text);
+         
+         // Clean up
+         await partFile.delete();
+       }
+       
+       return fullTranscription.toString();
+     } finally {
+       // Delete temporary directory
+       await tempDir.delete(recursive: true);
+     }
+   }
+   ```
+
+## Conclusion
+
+When encountering API limitations, always refer to the latest [Gladia API documentation](https://docs.gladia.io/) for the most up-to-date information on limits and best practices. 

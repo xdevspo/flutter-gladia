@@ -1,8 +1,14 @@
-## 0.1.0
+# Changelog
+
+## 0.1.0 - Initial Release
 
 * Initial library version
-* Basic structure for working with Gladia API
-* Added methods for audio transcription
+* Core features:
+  * Audio file transcription
+  * Real-time audio streaming transcription
+  * Support for multiple languages
+  * Speaker detection and diarization
 * Support for uploading files to Gladia server
 * Two-stage transcription process (upload + transcription)
-* API error handling 
+* Comprehensive error handling with custom exceptions
+* Complete example applications 

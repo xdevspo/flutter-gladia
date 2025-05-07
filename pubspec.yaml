@@ -5,6 +5,11 @@ repository: https://github.com/gladiaio/gladia-flutter
 homepage: https://gladia.io
 documentation: https://docs.gladia.io
 issue_tracker: https://github.com/gladiaio/gladia-flutter/issues
+topics:
+  - audio
+  - transcription
+  - api
+  - translation
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

@@ -1,51 +1,34 @@
-# Документация Gladia Flutter SDK
+# Gladia API SDK for Dart and Flutter
 
-В этом разделе содержится документация к Flutter SDK для работы с Gladia API - сервисом транскрипции и анализа аудио.
+Official Dart/Flutter SDK for working with Gladia API. The library provides convenient access to audio and video transcription features, including file processing and real-time streaming transcription.
 
-## Содержание
+## Documentation Contents
 
-### Основная документация
+- [Getting Started](getting_started.md) - Installation instructions and basic examples
+- [API Reference](api_reference.md) - Complete documentation of all available methods and classes
+- [Usage Examples](usage_examples.md) - Examples of using the main features
+- [Advanced Usage](advanced_usage.md) - Advanced features and optimizations
+- [Error Handling](error_handling.md) - Guide to handling errors and exceptions
+- [API Limitations](api_limitations.md) - Information about Gladia API limitations and requirements
 
-- [Руководство по транскрипции в реальном времени](live_transcription_guide.md) - подробное описание работы с API транскрипции в реальном времени
-- [Ограничения и лимиты API](api_limitations.md) - информация о существующих ограничениях и рекомендации по их обходу
+## Main Features
 
-### Примеры использования
+- Audio and video file transcription
+- Real-time streaming transcription
+- Support for various languages and transcription settings
+- API error handling
+- File uploads to Gladia server
+- Two-stage transcription process (upload + transcription)
+- Detailed results with timestamps
+- Diarization (speaker identification)
+- Output formatting and customization
 
-В директории `example/` вы найдете примеры использования SDK:
+## Requirements
 
-- `live_audio_transcription_example.dart` - пример транскрипции в реальном времени
-- `console_sync_example.dart` - пример синхронной транскрипции в консольном приложении
-- `download_audio_example.dart` - пример транскрипции аудио из URL
+- Dart SDK: >=3.0.0 <4.0.0
+- Flutter: >=3.0.0 (for Flutter applications)
+- Gladia account and API key
 
-## Начало работы
+## License
 
-### Установка
-
-Добавьте пакет в свой `pubspec.yaml`:
-
-```yaml
-dependencies:
-  gladia: ^1.0.0
-```
-
-### Инициализация клиента
-
-```dart
-import 'package:gladia/gladia.dart';
-
-final gladiaClient = GladiaClient(
-  apiKey: 'ваш_api_ключ',
-  enableLogging: true, // Опционально
-);
-```
-
-### Основные возможности SDK
-
-- Транскрипция аудиофайлов
-- Транскрипция аудио по URL
-- Транскрипция в реальном времени через WebSocket
-- Управление сессиями транскрипции
-
-## Лицензия
-
-Проект распространяется под лицензией MIT. Подробнее см. в файле [LICENSE](../LICENSE). 
+MIT 
