@@ -1,6 +1,6 @@
 name: gladia_example
 description: Example application for Gladia Flutter SDK
-version: 0.1.0
+version: 0.1.2
 publish_to: "none"
 
 environment:
@@ -20,7 +20,7 @@ dependencies:
   shared_preferences: ^2.2.2
   dio: ^5.3.2
   path: ^1.8.3
-  file_picker: ^6.1.1
+  file_picker: ^10.1.7
 
 dev_dependencies:
   flutter_test:
