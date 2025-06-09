@@ -98,27 +98,36 @@ class GladiaClient {
         throw GladiaApiException(message: 'Empty response from server');
       }
 
-      if (response.data is! Map<String, dynamic>) {
-        if (response.data is String) {
-          try {
-            // Try to parse the string as JSON
-            final jsonData = json.decode(response.data as String);
-            if (jsonData is Map<String, dynamic>) {
-              return UploadResult.fromJson(jsonData);
-            }
-          } catch (e) {
+      // Parse response data safely
+      Map<String, dynamic> responseData;
+
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else if (response.data is String) {
+        try {
+          // Try to parse the string as JSON
+          final jsonData = json.decode(response.data as String);
+          if (jsonData is Map<String, dynamic>) {
+            responseData = jsonData;
+          } else {
             throw GladiaApiException(
-              message: 'Unable to parse response as JSON: ${response.data}',
+              message: 'Response JSON is not an object: ${response.data}',
             );
           }
+        } catch (e) {
+          throw GladiaApiException(
+            message:
+                'Unable to parse response as JSON: ${response.data}. Error: $e',
+          );
         }
+      } else {
         throw GladiaApiException(
           message:
-              'Invalid response format from server: ${response.data.runtimeType}',
+              'Invalid response format from server. Expected Map<String, dynamic> or String, got: ${response.data.runtimeType}. Data: ${response.data}',
         );
       }
 
-      return UploadResult.fromJson(response.data as Map<String, dynamic>);
+      return UploadResult.fromJson(responseData);
     } on DioException catch (e) {
       throw GladiaApiException.fromDioError(e);
     } catch (e) {
@@ -168,28 +177,51 @@ class GladiaClient {
         throw GladiaApiException(message: 'Empty response from server');
       }
 
-      if (response.data is! Map<String, dynamic>) {
-        if (response.data is String) {
-          try {
-            // Try to parse the string as JSON
-            final jsonData = json.decode(response.data as String);
-            if (jsonData is Map<String, dynamic>) {
-              return TranscriptionInitResult.fromJson(jsonData);
-            }
-          } catch (e) {
+      // Parse response data safely
+      Map<String, dynamic> responseData;
+
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else if (response.data is String) {
+        try {
+          // Try to parse the string as JSON
+          final jsonData = json.decode(response.data as String);
+          if (jsonData is Map<String, dynamic>) {
+            responseData = jsonData;
+          } else {
             throw GladiaApiException(
-              message: 'Unable to parse response as JSON: ${response.data}',
+              message: 'Response JSON is not an object: ${response.data}',
             );
           }
+        } catch (e) {
+          throw GladiaApiException(
+            message:
+                'Unable to parse response as JSON: ${response.data}. Error: $e',
+          );
         }
+      } else {
         throw GladiaApiException(
           message:
-              'Invalid response format from server: ${response.data.runtimeType}',
+              'Invalid response format from server. Expected Map<String, dynamic> or String, got: ${response.data.runtimeType}. Data: ${response.data}',
         );
       }
 
-      return TranscriptionInitResult.fromJson(
-          response.data as Map<String, dynamic>);
+      // Validate required fields before creating the object
+      if (!responseData.containsKey('id')) {
+        throw GladiaApiException(
+          message:
+              'Response missing required field: id. Response: $responseData',
+        );
+      }
+
+      if (!responseData.containsKey('result_url')) {
+        throw GladiaApiException(
+          message:
+              'Response missing required field: result_url. Response: $responseData',
+        );
+      }
+
+      return TranscriptionInitResult.fromJson(responseData);
     } on DioException catch (e) {
       throw GladiaApiException.fromDioError(e);
     } catch (e) {
@@ -782,27 +814,36 @@ class GladiaClient {
         throw GladiaApiException(message: 'Empty response from server');
       }
 
-      if (response.data is! Map<String, dynamic>) {
-        if (response.data is String) {
-          try {
-            // Try to parse the string as JSON
-            final jsonData = json.decode(response.data as String);
-            if (jsonData is Map<String, dynamic>) {
-              return LiveSessionInitResult.fromJson(jsonData);
-            }
-          } catch (e) {
+      // Parse response data safely
+      Map<String, dynamic> responseData;
+
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else if (response.data is String) {
+        try {
+          // Try to parse the string as JSON
+          final jsonData = json.decode(response.data as String);
+          if (jsonData is Map<String, dynamic>) {
+            responseData = jsonData;
+          } else {
             throw GladiaApiException(
-              message: 'Unable to parse response as JSON: ${response.data}',
+              message: 'Response JSON is not an object: ${response.data}',
             );
           }
+        } catch (e) {
+          throw GladiaApiException(
+            message:
+                'Unable to parse response as JSON: ${response.data}. Error: $e',
+          );
         }
+      } else {
         throw GladiaApiException(
           message:
-              'Invalid response format from server: ${response.data.runtimeType}',
+              'Invalid response format from server. Expected Map<String, dynamic> or String, got: ${response.data.runtimeType}. Data: ${response.data}',
         );
       }
 
-      return LiveSessionInitResult.fromJson(response.data);
+      return LiveSessionInitResult.fromJson(responseData);
     } on DioException catch (e) {
       throw GladiaApiException.fromDioError(e);
     } catch (e) {
