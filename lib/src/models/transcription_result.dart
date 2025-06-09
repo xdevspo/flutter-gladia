@@ -300,7 +300,7 @@ class TranscriptionSegment {
   final double end;
 
   /// Speaker identifier (if speaker diarization is available)
-  final String? speaker;
+  final int? speaker;
 
   /// Confidence in identification (0 to 1)
   final double? confidence;

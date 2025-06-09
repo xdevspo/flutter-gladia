@@ -145,9 +145,10 @@ class TranscriptionScreenState extends State<TranscriptionScreen> {
       final result = await client.transcribeFile(
         file: _audioFile!,
         options: const TranscriptionOptions(
-          language: 'en',
+          language: 'ru',
           diarization: true,
           sentimentAnalysis: true,
+          sentences: true,
         ),
       );
 
