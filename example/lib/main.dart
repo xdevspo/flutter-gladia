@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gladia/gladia.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(const GladiaExampleApp());
@@ -34,10 +36,75 @@ class TranscriptionScreenState extends State<TranscriptionScreen> {
   final TextEditingController _apiKeyController = TextEditingController();
   final TextEditingController _resultController = TextEditingController();
 
-  File? _selectedFile;
+  File? _audioFile;
   bool _isTranscribing = false;
   String? _transcriptionError;
   List<TranscriptionSegment>? _segments;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with the audio file from assets or file system
+    _initializeAudioFile();
+  }
+
+  Future<void> _initializeAudioFile() async {
+    try {
+      // First, try to load from assets and copy to temp directory
+      print('Trying to load audio file from assets...');
+      final ByteData data = await rootBundle.load('assets/audio_file.mp3');
+      final List<int> bytes = data.buffer.asUint8List();
+
+      // Get temporary directory
+      final Directory tempDir = await getTemporaryDirectory();
+      final String tempPath = '${tempDir.path}/audio_file.mp3';
+
+      // Write file to temp directory
+      final File tempFile = File(tempPath);
+      await tempFile.writeAsBytes(bytes);
+
+      print('Successfully copied audio file to: $tempPath');
+      setState(() {
+        _audioFile = tempFile;
+      });
+      return;
+    } catch (e) {
+      print('Failed to load from assets: $e');
+    }
+
+    // Fallback: try to find file in file system
+    final currentDir = Directory.current.path;
+
+    final possiblePaths = [
+      'audio_file.mp3', // Current working directory
+      'lib/audio_file.mp3', // Relative to example directory
+      'assets/audio_file.mp3', // In assets folder
+      'example/lib/audio_file.mp3', // From project root
+      '$currentDir/lib/audio_file.mp3', // Absolute path to lib folder
+      '$currentDir/assets/audio_file.mp3', // Absolute path to assets folder
+      '$currentDir/../example/lib/audio_file.mp3', // From gladia root
+    ];
+
+    print('Searching for audio file in current directory: $currentDir');
+
+    for (final path in possiblePaths) {
+      final file = File(path);
+      print('Trying path: $path - exists: ${file.existsSync()}');
+      if (file.existsSync()) {
+        print('Found audio file at: ${file.absolute.path}');
+        setState(() {
+          _audioFile = file;
+        });
+        return;
+      }
+    }
+
+    print('Audio file not found in any of the expected paths');
+    // Set to null if not found
+    setState(() {
+      _audioFile = null;
+    });
+  }
 
   @override
   void dispose() {
@@ -46,27 +113,10 @@ class TranscriptionScreenState extends State<TranscriptionScreen> {
     super.dispose();
   }
 
-  Future<void> _selectFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.audio,
-      allowMultiple: false,
-    );
-
-    if (result != null && result.files.isNotEmpty) {
-      final file = File(result.files.first.path!);
-      setState(() {
-        _selectedFile = file;
-        _resultController.clear();
-        _transcriptionError = null;
-        _segments = null;
-      });
-    }
-  }
-
   Future<void> _transcribeAudio() async {
-    if (_selectedFile == null) {
+    if (_audioFile == null || !_audioFile!.existsSync()) {
       setState(() {
-        _transcriptionError = 'Please select an audio file first';
+        _transcriptionError = 'Audio file not found: audio_file.mp3';
       });
       return;
     }
@@ -87,13 +137,17 @@ class TranscriptionScreenState extends State<TranscriptionScreen> {
     });
 
     try {
-      final client = GladiaClient(apiKey: apiKey);
+      final client = GladiaClient(
+        apiKey: apiKey,
+        enableLogging: true, // Enable logging to see API requests
+      );
 
       final result = await client.transcribeFile(
-        file: _selectedFile!,
+        file: _audioFile!,
         options: const TranscriptionOptions(
           language: 'en',
           diarization: true,
+          sentimentAnalysis: true,
         ),
       );
 
@@ -132,22 +186,62 @@ class TranscriptionScreenState extends State<TranscriptionScreen> {
                 obscureText: true,
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _selectedFile != null
-                          ? 'Selected: ${_selectedFile!.path.split('/').last}'
-                          : 'No file selected',
-                      overflow: TextOverflow.ellipsis,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.audiotrack, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _audioFile != null
+                                ? 'Audio file: ${_audioFile!.path.split('/').last}'
+                                : 'Audio file: audio_file.mp3',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _audioFile != null
+                                ? 'Path: ${_audioFile!.path}'
+                                : 'Status: Not found in expected locations',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _audioFile?.existsSync() == true
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+                          Text(
+                            _audioFile?.existsSync() == true
+                                ? 'Status: ✓ Found'
+                                : 'Status: ✗ Not found',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _audioFile?.existsSync() == true
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: _selectFile,
-                    child: const Text('Select Audio File'),
-                  ),
-                ],
+                    if (_audioFile == null || !_audioFile!.existsSync()) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: _initializeAudioFile,
+                        icon: const Icon(Icons.refresh),
+                        tooltip: 'Search for audio file again',
+                      ),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               ElevatedButton(

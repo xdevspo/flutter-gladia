@@ -163,7 +163,17 @@ class GladiaClient {
       // Add options if specified
       if (options != null) {
         // Merge parameters from TranscriptionOptions
-        requestData.addAll(options.toJson());
+        final optionsJson = options.toJson();
+
+        // Remove null values to avoid sending unnecessary data
+        optionsJson.removeWhere((key, value) => value == null);
+
+        requestData.addAll(optionsJson);
+      }
+
+      // Debug logging for validation errors
+      if (enableLogging) {
+        print('DEBUG: Request data being sent to API: $requestData');
       }
 
       // Make request for transcription using the new v2/pre-recorded endpoint

@@ -52,32 +52,47 @@ class GladiaApiException implements Exception {
     if (error.response != null) {
       statusCode = error.response!.statusCode;
 
-      if (error.response!.data is Map<String, dynamic>) {
-        responseData = error.response!.data as Map<String, dynamic>;
+      try {
+        if (error.response!.data is Map<String, dynamic>) {
+          responseData = error.response!.data as Map<String, dynamic>;
 
-        // Extract validation errors, if available
-        if (responseData.containsKey('validation_errors')) {
-          final errorsData = responseData['validation_errors'];
-          if (errorsData is List) {
-            validationErrors =
-                errorsData.map((e) => e as Map<String, dynamic>).toList();
+          // Extract validation errors, if available
+          if (responseData.containsKey('validation_errors')) {
+            final errorsData = responseData['validation_errors'];
+            if (errorsData is List) {
+              validationErrors = errorsData
+                  .where((e) => e is Map<String, dynamic>)
+                  .map((e) => e as Map<String, dynamic>)
+                  .toList();
+            }
           }
-        }
 
-        // Try to extract error message from API response
-        if (responseData.containsKey('error')) {
-          message = responseData['error'] as String;
-        } else if (responseData.containsKey('message')) {
-          message = responseData['message'] as String;
-        } else if (validationErrors != null && validationErrors.isNotEmpty) {
-          // If there are validation errors, include the first one in the message
-          message =
-              'Validation error: ${_formatValidationError(validationErrors.first)}';
+          // Try to extract error message from API response
+          if (responseData.containsKey('error')) {
+            final errorValue = responseData['error'];
+            message = errorValue is String ? errorValue : errorValue.toString();
+          } else if (responseData.containsKey('message')) {
+            final messageValue = responseData['message'];
+            message =
+                messageValue is String ? messageValue : messageValue.toString();
+          } else if (validationErrors != null && validationErrors.isNotEmpty) {
+            // If there are validation errors, include the first one in the message
+            message =
+                'Validation error: ${_formatValidationError(validationErrors.first)}';
+          } else {
+            message = 'API error: ${error.message}';
+          }
+        } else if (error.response!.data is String) {
+          // Handle string response data
+          final stringData = error.response!.data as String;
+          message = 'API error: $stringData';
         } else {
-          message = 'API error: ${error.message}';
+          message =
+              'API error: ${error.message} (Response type: ${error.response!.data.runtimeType})';
         }
-      } else {
-        message = 'API error: ${error.message}';
+      } catch (e) {
+        // If type casting fails, provide a safe fallback
+        message = 'API error: ${error.message} (Failed to parse response: $e)';
       }
     } else if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout ||
@@ -149,6 +164,11 @@ class GladiaApiException implements Exception {
 
     if (validationErrors != null && validationErrors!.isNotEmpty) {
       result += '\nValidation errors:\n$formattedValidationErrors';
+    }
+
+    // Always show response data for validation errors to help debugging
+    if (statusCode == 400 && responseData != null) {
+      result += '\nFull response data: $responseData';
     }
 
     if (includeDebugInfo && debugInfo != null) {

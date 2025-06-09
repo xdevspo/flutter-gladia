@@ -27,49 +27,50 @@ TranscriptionOptions _$TranscriptionOptionsFromJson(
           : SubtitlesConfig.fromJson(
               json['subtitles_config'] as Map<String, dynamic>),
       diarization: json['diarization'] as bool?,
-      diarizationConfig: json['diarizationConfig'] == null
+      diarizationConfig: json['diarization_config'] == null
           ? null
           : DiarizationConfig.fromJson(
-              json['diarizationConfig'] as Map<String, dynamic>),
+              json['diarization_config'] as Map<String, dynamic>),
       translation: json['translation'] as bool?,
-      translationConfig: json['translationConfig'] == null
+      translationConfig: json['translation_config'] == null
           ? null
           : TranslationConfig.fromJson(
-              json['translationConfig'] as Map<String, dynamic>),
+              json['translation_config'] as Map<String, dynamic>),
       summarization: json['summarization'] as bool?,
-      summarizationConfig: json['summarizationConfig'] == null
+      summarizationConfig: json['summarization_config'] == null
           ? null
           : SummarizationConfig.fromJson(
-              json['summarizationConfig'] as Map<String, dynamic>),
+              json['summarization_config'] as Map<String, dynamic>),
       moderation: json['moderation'] as bool?,
-      namedEntityRecognition: json['namedEntityRecognition'] as bool?,
+      namedEntityRecognition: json['named_entity_recognition'] as bool?,
       chapterization: json['chapterization'] as bool?,
-      namesConsistency: json['namesConsistency'] as bool?,
-      customSpelling: json['customSpelling'] as bool?,
-      customSpellingConfig: json['customSpellingConfig'] == null
+      namesConsistency: json['names_consistency'] as bool?,
+      customSpelling: json['custom_spelling'] as bool?,
+      customSpellingConfig: json['custom_spelling_config'] == null
           ? null
           : CustomSpellingConfig.fromJson(
-              json['customSpellingConfig'] as Map<String, dynamic>),
-      structuredDataExtraction: json['structuredDataExtraction'] as bool?,
-      structuredDataExtractionConfig: json['structuredDataExtractionConfig'] ==
-              null
-          ? null
-          : StructuredDataExtractionConfig.fromJson(
-              json['structuredDataExtractionConfig'] as Map<String, dynamic>),
-      sentimentAnalysis: json['sentimentAnalysis'] as bool?,
-      audioToLLM: json['audioToLLM'] as bool?,
-      audioToLLMConfig: json['audioToLLMConfig'] == null
+              json['custom_spelling_config'] as Map<String, dynamic>),
+      structuredDataExtraction: json['structured_data_extraction'] as bool?,
+      structuredDataExtractionConfig:
+          json['structured_data_extraction_config'] == null
+              ? null
+              : StructuredDataExtractionConfig.fromJson(
+                  json['structured_data_extraction_config']
+                      as Map<String, dynamic>),
+      sentimentAnalysis: json['sentiment_analysis'] as bool?,
+      audioToLLM: json['audio_to_llm'] as bool?,
+      audioToLLMConfig: json['audio_to_llm_config'] == null
           ? null
           : AudioToLLMConfig.fromJson(
-              json['audioToLLMConfig'] as Map<String, dynamic>),
-      customMetadata: json['customMetadata'] as Map<String, dynamic>?,
+              json['audio_to_llm_config'] as Map<String, dynamic>),
+      customMetadata: json['custom_metadata'] as Map<String, dynamic>?,
       sentences: json['sentences'] as bool?,
-      displayMode: json['displayMode'] as String?,
-      enhancedPunctuation: json['enhancedPunctuation'] as bool?,
-      languageConfig: json['languageConfig'] == null
+      displayMode: json['display_mode'] as String?,
+      enhancedPunctuation: json['enhanced_punctuation'] as bool?,
+      languageConfig: json['language_config'] == null
           ? null
           : LanguageConfig.fromJson(
-              json['languageConfig'] as Map<String, dynamic>),
+              json['language_config'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$TranscriptionOptionsToJson(
@@ -84,25 +85,26 @@ Map<String, dynamic> _$TranscriptionOptionsToJson(
       'subtitles': instance.subtitles,
       'subtitles_config': instance.subtitlesConfig,
       'diarization': instance.diarization,
-      'diarizationConfig': instance.diarizationConfig,
+      'diarization_config': instance.diarizationConfig,
       'translation': instance.translation,
-      'translationConfig': instance.translationConfig,
+      'translation_config': instance.translationConfig,
       'summarization': instance.summarization,
-      'summarizationConfig': instance.summarizationConfig,
+      'summarization_config': instance.summarizationConfig,
       'moderation': instance.moderation,
-      'namedEntityRecognition': instance.namedEntityRecognition,
+      'named_entity_recognition': instance.namedEntityRecognition,
       'chapterization': instance.chapterization,
-      'namesConsistency': instance.namesConsistency,
-      'customSpelling': instance.customSpelling,
-      'customSpellingConfig': instance.customSpellingConfig,
-      'structuredDataExtraction': instance.structuredDataExtraction,
-      'structuredDataExtractionConfig': instance.structuredDataExtractionConfig,
-      'sentimentAnalysis': instance.sentimentAnalysis,
-      'audioToLLM': instance.audioToLLM,
-      'audioToLLMConfig': instance.audioToLLMConfig,
-      'customMetadata': instance.customMetadata,
+      'names_consistency': instance.namesConsistency,
+      'custom_spelling': instance.customSpelling,
+      'custom_spelling_config': instance.customSpellingConfig,
+      'structured_data_extraction': instance.structuredDataExtraction,
+      'structured_data_extraction_config':
+          instance.structuredDataExtractionConfig,
+      'sentiment_analysis': instance.sentimentAnalysis,
+      'audio_to_llm': instance.audioToLLM,
+      'audio_to_llm_config': instance.audioToLLMConfig,
+      'custom_metadata': instance.customMetadata,
       'sentences': instance.sentences,
-      'displayMode': instance.displayMode,
-      'enhancedPunctuation': instance.enhancedPunctuation,
-      'languageConfig': instance.languageConfig,
+      'display_mode': instance.displayMode,
+      'enhanced_punctuation': instance.enhancedPunctuation,
+      'language_config': instance.languageConfig,
     };
