@@ -28,7 +28,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  gladia: ^0.1.3
+  gladia: ^0.1.4
 ```
 
 Then run:

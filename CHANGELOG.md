@@ -1,5 +1,5 @@
 # Changelog
 
-## 0.1.3
+## 0.1.4
 
-* Refactor response data parsing in GladiaClient to improve error handling and validation of required fields
+* Added error diagnostic tool for Gladia SDK, API validation tests, and transcription options serialization. Updated dependencies and added audio files for
