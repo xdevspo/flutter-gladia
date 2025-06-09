@@ -1,5 +1,5 @@
 # Changelog
 
-## 0.1.2
+## 0.1.3
 
-* Update version package file_picker
+* Refactor response data parsing in GladiaClient to improve error handling and validation of required fields
