@@ -234,6 +234,7 @@ class TranscriptionData extends ResultData {
 @JsonSerializable()
 class SentenceData extends ResultData {
   /// Sentence results as a list of strings
+  @JsonKey(name: 'results')
   final List<String>? _resultsList;
 
   /// Creates a new instance of [SentenceData]
@@ -242,7 +243,7 @@ class SentenceData extends ResultData {
     super.isEmpty,
     super.execTime,
     super.error,
-    @JsonKey(name: 'results') List<String>? results,
+    List<String>? results,
   }) : _resultsList = results;
 
   /// Returns results

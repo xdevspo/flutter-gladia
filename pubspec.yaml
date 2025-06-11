@@ -1,6 +1,6 @@
 name: gladia
 description: A Flutter SDK for the Gladia API for audio transcription, translation, and analysis
-version: 0.1.6
+version: 0.1.7
 repository: https://github.com/xdevspo/flutter-gladia
 homepage: https://gladia.io
 documentation: https://docs.gladia.io
