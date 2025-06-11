@@ -98,7 +98,8 @@ void main(List<String> args) async {
       print('\n===========================================================');
       print('📋 RAW JSON RESULTS');
       print('===========================================================');
-      final jsonString = JsonEncoder.withIndent('  ').convert(rawResponse.data);
+      final jsonString =
+          const JsonEncoder.withIndent('  ').convert(rawResponse.data);
       print(jsonString);
     } catch (e) {
       print('❌ Error getting raw JSON: $e');

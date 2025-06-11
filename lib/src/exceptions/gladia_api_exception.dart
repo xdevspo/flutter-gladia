@@ -61,7 +61,7 @@ class GladiaApiException implements Exception {
             final errorsData = responseData['validation_errors'];
             if (errorsData is List) {
               validationErrors = errorsData
-                  .where((e) => e is Map<String, dynamic>)
+                  .whereType<Map<String, dynamic>>()
                   .map((e) => e as Map<String, dynamic>)
                   .toList();
             }

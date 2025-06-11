@@ -1,5 +1,5 @@
 # Changelog
 
-## 0.1.4
+## 0.1.5
 
-* Added error diagnostic tool for Gladia SDK, API validation tests, and transcription options serialization. Updated dependencies and added audio files for
+* Changed transcription language to Russian and added option to analyze sentences. Changed speaker ID type to integer to improve data processing.

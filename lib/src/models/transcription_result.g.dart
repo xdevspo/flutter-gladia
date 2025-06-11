@@ -195,7 +195,7 @@ TranscriptionSegment _$TranscriptionSegmentFromJson(
       text: json['text'] as String,
       start: (json['start'] as num).toDouble(),
       end: (json['end'] as num).toDouble(),
-      speaker: json['speaker'] as String?,
+      speaker: (json['speaker'] as num?)?.toInt(),
       confidence: (json['confidence'] as num?)?.toDouble(),
       language: json['language'] as String?,
       channel: (json['channel'] as num?)?.toInt(),
