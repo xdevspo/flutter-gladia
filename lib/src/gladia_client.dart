@@ -171,11 +171,6 @@ class GladiaClient {
         requestData.addAll(optionsJson);
       }
 
-      // Debug logging for validation errors
-      if (enableLogging) {
-        print('DEBUG: Request data being sent to API: $requestData');
-      }
-
       // Make request for transcription using the new v2/pre-recorded endpoint
       final response = await _dio.post(
         'v2/pre-recorded',
